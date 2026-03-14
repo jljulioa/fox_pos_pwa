@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { generateInvoicePDF } from "@/lib/pdf";
 
 const PAGE_SIZE = 30;
 
@@ -188,6 +189,22 @@ export default function SalesHistoryPage() {
         } finally {
             setProcessReturn(false);
         }
+    };
+
+    const handlePrintReceipt = () => {
+        if (!selectedSale) return;
+        
+        const cartForPdf = saleItems.map(item => ({
+            name: item.products?.name || "Unknown item",
+            quantity: item.quantity,
+            price: Number(item.unit_price)
+        }));
+        
+        const subtotal = saleItems.reduce((sum, item) => sum + (Number(item.unit_price) * item.quantity), 0);
+        const tax = saleItems.reduce((sum, item) => sum + Number(item.tax_amount || 0), 0);
+        const total = Number(selectedSale.total_amount);
+
+        generateInvoicePDF(selectedSale, cartForPdf, subtotal, tax, total);
     };
 
     return (
@@ -505,7 +522,10 @@ export default function SalesHistoryPage() {
                                 <p className="text-[9px] font-bold uppercase tracking-[0.2em] max-w-[280px]">Inventory updates and revenue adjustments are processed automatically upon return.</p>
                             </div>
                             <div className="flex gap-4 w-full md:w-auto">
-                                <button className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-5 bg-white text-primary rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-sm hover:scale-105 active:scale-95 transition-all">
+                                <button 
+                                    onClick={handlePrintReceipt}
+                                    className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-5 bg-white text-primary rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-sm hover:scale-105 active:scale-95 transition-all"
+                                >
                                     <Download size={20} strokeWidth={1.5} />
                                     Print Receipt
                                 </button>
