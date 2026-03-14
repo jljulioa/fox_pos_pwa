@@ -23,8 +23,8 @@ import {
     TrendingUp,
     Store
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { inventoryService } from "@/services/inventoryService";
 
 export default function InventoryPage() {
     const [products, setProducts] = useState<any[]>([]);
@@ -65,10 +65,7 @@ export default function InventoryPage() {
     async function fetchProducts() {
         setPageError(null);
         try {
-            const { data, error } = await supabase
-                .from("products")
-                .select("*, product_categories(name, sku_slug)")
-                .order("name");
+            const { data, error } = await inventoryService.fetchProducts();
 
             if (error) throw error;
             setProducts(data || []);
@@ -80,7 +77,7 @@ export default function InventoryPage() {
 
     async function fetchCategories() {
         try {
-            const { data, error } = await supabase.from("product_categories").select("*");
+            const { data, error } = await inventoryService.fetchCategories();
             if (error) throw error;
             setCategories(data || []);
             // Set default category if creating
@@ -139,10 +136,10 @@ export default function InventoryPage() {
 
             // Handle SKU generation for new products
             if (!isEditing) {
-                const { data: generated, error: rpcErr } = await supabase.rpc('generate_moto_sku', {
-                    cat_id: formData.category_id,
-                    brand_name: formData.brand
-                });
+                const { data: generated, error: rpcErr } = await inventoryService.generateSku(
+                    formData.category_id,
+                    formData.brand
+                );
                 if (rpcErr) throw rpcErr;
                 finalSku = generated;
             }
@@ -162,15 +159,10 @@ export default function InventoryPage() {
             };
 
             if (isEditing) {
-                const { error } = await supabase
-                    .from("products")
-                    .update(payload)
-                    .eq("id", formData.id);
+                const { error } = await inventoryService.updateProduct(formData.id, payload);
                 if (error) throw error;
             } else {
-                const { error } = await supabase
-                    .from("products")
-                    .insert(payload);
+                const { error } = await inventoryService.createProduct(payload);
                 if (error) throw error;
             }
 
@@ -187,7 +179,7 @@ export default function InventoryPage() {
         if (!confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) return;
 
         try {
-            const { error } = await supabase.from("products").delete().eq("id", id);
+            const { error } = await inventoryService.deleteProduct(id);
             if (error) throw error;
             fetchProducts();
         } catch (err: any) {

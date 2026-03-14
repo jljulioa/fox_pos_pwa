@@ -25,8 +25,8 @@ import {
     CreditCard,
     Trash2
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { customerService } from "@/services/customerService";
 
 export default function CustomersPage() {
     const [customers, setCustomers] = useState<any[]>([]);
@@ -56,10 +56,7 @@ export default function CustomersPage() {
         setLoading(true);
         setPageError(null);
         try {
-            const { data, error } = await supabase
-                .from("customers")
-                .select("*")
-                .order("name");
+            const { data, error } = await customerService.fetchCustomers();
 
             if (error) throw error;
             setCustomers(data || []);
@@ -114,15 +111,10 @@ export default function CustomersPage() {
             };
 
             if (isEditing) {
-                const { error } = await supabase
-                    .from("customers")
-                    .update(payload)
-                    .eq("id", formData.id);
+                const { error } = await customerService.updateCustomer(formData.id, payload);
                 if (error) throw error;
             } else {
-                const { error } = await supabase
-                    .from("customers")
-                    .insert(payload);
+                const { error } = await customerService.createCustomer(payload);
                 if (error) throw error;
             }
 
@@ -139,7 +131,7 @@ export default function CustomersPage() {
         if (!confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) return;
 
         try {
-            const { error } = await supabase.from("customers").delete().eq("id", id);
+            const { error } = await customerService.deleteCustomer(id);
             if (error) throw error;
             fetchCustomers();
         } catch (err: any) {

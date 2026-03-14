@@ -17,8 +17,8 @@ import {
     ArrowRight,
     Download
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { historyService, HistoryFilterType } from "@/services/historyService";
 
 const PAGE_SIZE = 30;
 
@@ -26,7 +26,7 @@ export default function TransactionsPage() {
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [dateFilter, setDateFilter] = useState("all"); // all, today, 7days, month, custom
+    const [dateFilter, setDateFilter] = useState("today"); // all, today, 7days, month, custom
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [page, setPage] = useState(0);
@@ -38,37 +38,15 @@ export default function TransactionsPage() {
 
     async function fetchTransactions() {
         setLoading(true);
-        let query = supabase
-            .from("inventory_transactions")
-            .select("*", { count: "exact" })
-            .order("transaction_date", { ascending: false });
 
-        // Date Filtering Logic
-        const now = new Date();
-        if (dateFilter === "today") {
-            const startOfDay = new Date(now.setHours(0, 0, 0, 0)).toISOString();
-            query = query.gte("transaction_date", startOfDay);
-        } else if (dateFilter === "7days") {
-            const sevenDaysAgo = new Date(now.setDate(now.getDate() - 7)).toISOString();
-            query = query.gte("transaction_date", sevenDaysAgo);
-        } else if (dateFilter === "month") {
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-            query = query.gte("transaction_date", startOfMonth);
-        } else if (dateFilter === "custom" && startDate && endDate) {
-            query = query.gte("transaction_date", startDate).lte("transaction_date", endDate);
-        }
-
-        // Search
-        if (searchTerm) {
-            query = query.ilike("product_name", `%${searchTerm}%`);
-        }
-
-        // Pagination
-        const from = page * PAGE_SIZE;
-        const to = from + PAGE_SIZE - 1;
-        query = query.range(from, to);
-
-        const { data, count, error } = await query;
+        const { data, count, error } = await historyService.fetchTransactions({
+            dateFilter,
+            startDate,
+            endDate,
+            searchTerm,
+            page,
+            pageSize: PAGE_SIZE,
+        });
 
         if (!error && data) {
             setTransactions(data);

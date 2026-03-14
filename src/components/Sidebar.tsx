@@ -12,6 +12,7 @@ import {
     LogOut,
     History,
     Receipt,
+    Truck,
     ChevronLeft,
     Menu,
     X,
@@ -35,6 +36,7 @@ const sections = [
         title: "Catalog",
         items: [
             { icon: Package, label: "Stock", href: "/inventory" },
+            { icon: Truck, label: "Purchases", href: "/purchases" },
             { icon: FolderTree, label: "Groups", href: "/categories" },
         ]
     },

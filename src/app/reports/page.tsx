@@ -14,7 +14,7 @@ import {
     Cell
 } from "recharts";
 import { Download, Calendar, TrendingUp, ArrowUpRight, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { reportService } from "@/services/reportService";
 
 export default function ReportsPage() {
     const [salesData, setSalesData] = useState<any[]>([]);
@@ -30,10 +30,7 @@ export default function ReportsPage() {
         setLoading(true);
         try {
             // 1. Fetch Weekly Sales Data
-            const { data: sales, error: salesError } = await supabase
-                .from("sales")
-                .select("total_amount, date")
-                .order('date', { ascending: true });
+            const { data: sales, error: salesError } = await reportService.fetchSalesData();
 
             if (sales) {
                 const total = sales.reduce((acc, s) => acc + Number(s.total_amount), 0);
@@ -56,14 +53,7 @@ export default function ReportsPage() {
             }
 
             // 2. Fetch Sales by Category
-            const { data: categorySales, error: catError } = await supabase
-                .from("sale_items")
-                .select(`
-                    total_price,
-                    products (
-                        product_categories (name)
-                    )
-                `);
+            const { data: categorySales, error: catError } = await reportService.fetchCategorySalesData();
 
             if (categorySales) {
                 const groupedCat = categorySales.reduce((acc: any, item: any) => {

@@ -19,8 +19,8 @@ import {
     ArrowRight,
     Trash2
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { categoriesService } from "@/services/categoriesService";
 
 export default function CategoriesPage() {
     const [categories, setCategories] = useState<any[]>([]);
@@ -54,10 +54,7 @@ export default function CategoriesPage() {
     async function fetchCategories() {
         setPageError(null);
         try {
-            const { data, error } = await supabase
-                .from("product_categories")
-                .select("*, taxes(name, rate)")
-                .order("name");
+            const { data, error } = await categoriesService.fetchCategories();
 
             if (error) throw error;
             setCategories(data || []);
@@ -69,7 +66,7 @@ export default function CategoriesPage() {
 
     async function fetchTaxes() {
         try {
-            const { data, error } = await supabase.from("taxes").select("*").eq("is_active", true);
+            const { data, error } = await categoriesService.fetchTaxes();
             if (error) throw error;
             setTaxes(data || []);
         } catch (err) {
@@ -115,15 +112,10 @@ export default function CategoriesPage() {
             };
 
             if (isEditing) {
-                const { error } = await supabase
-                    .from("product_categories")
-                    .update(payload)
-                    .eq("id", formData.id);
+                const { error } = await categoriesService.updateCategory(formData.id, payload);
                 if (error) throw error;
             } else {
-                const { error } = await supabase
-                    .from("product_categories")
-                    .insert(payload);
+                const { error } = await categoriesService.createCategory(payload);
                 if (error) throw error;
             }
 
@@ -140,7 +132,7 @@ export default function CategoriesPage() {
         if (!confirm(`Are you sure you want to delete the "${name}" category? This may affect products linked to it.`)) return;
 
         try {
-            const { error } = await supabase.from("product_categories").delete().eq("id", id);
+            const { error } = await categoriesService.deleteCategory(id);
             if (error) throw error;
             fetchCategories();
         } catch (err: any) {

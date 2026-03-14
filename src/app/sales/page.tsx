@@ -23,13 +23,11 @@ import {
     Download,
     CheckCircle2
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { generateInvoicePDF } from "@/lib/pdf";
+import { salesService, FilterType } from "@/services/salesService";
 
 const PAGE_SIZE = 30;
-
-type FilterType = 'all' | 'today' | '7days' | 'month' | 'custom';
 
 export default function SalesHistoryPage() {
     const [sales, setSales] = useState<any[]>([]);
@@ -56,37 +54,14 @@ export default function SalesHistoryPage() {
         setLoading(true);
         setPageError(null);
         try {
-            let query = supabase
-                .from("sales")
-                .select("*, customers(name)", { count: 'exact' });
-
-            // Apply Filters
-            const now = new Date();
-            if (dateFilter === 'today') {
-                const startOfDay = new Date(now.setHours(0, 0, 0, 0)).toISOString();
-                query = query.gte('date', startOfDay);
-            } else if (dateFilter === '7days') {
-                const sevenDaysAgo = new Date(now.setDate(now.getDate() - 7)).toISOString();
-                query = query.gte('date', sevenDaysAgo);
-            } else if (dateFilter === 'month') {
-                const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-                query = query.gte('date', firstDayOfMonth);
-            } else if (dateFilter === 'custom' && startDate && endDate) {
-                query = query.gte('date', startDate).lte('date', endDate);
-            }
-
-            // Search
-            if (searchTerm) {
-                query = query.ilike('sale_ref', `%${searchTerm}%`);
-            }
-
-            // Pagination
-            const from = page * PAGE_SIZE;
-            const to = from + PAGE_SIZE - 1;
-
-            const { data, error, count } = await query
-                .order('date', { ascending: false })
-                .range(from, to);
+            const { data, error, count } = await salesService.fetchSales({
+                dateFilter,
+                startDate,
+                endDate,
+                searchTerm,
+                page,
+                pageSize: PAGE_SIZE,
+            });
 
             if (error) throw error;
             setSales(data || []);
@@ -109,10 +84,7 @@ export default function SalesHistoryPage() {
         setSelectedSale(sale);
         setLoadingItems(true);
         try {
-            const { data, error } = await supabase
-                .from("sale_items")
-                .select("*, products(name, sku, stock)")
-                .eq("sale_id", sale.id);
+            const { data, error } = await salesService.fetchSaleDetails(sale.id);
 
             if (error) throw error;
             setSaleItems(data || []);
@@ -128,57 +100,7 @@ export default function SalesHistoryPage() {
 
         setProcessReturn(true);
         try {
-            const returningQty = 1;
-            const taxPerUnit = item.tax_amount / item.quantity;
-            const returningTax = taxPerUnit * returningQty;
-            const returningTotalWithTax = (item.unit_price * returningQty) + returningTax;
-
-            // 1. Update Sale Item
-            if (item.quantity <= returningQty) {
-                const { error: delErr } = await supabase.from("sale_items").delete().eq("id", item.id);
-                if (delErr) throw delErr;
-            } else {
-                const newQty = item.quantity - returningQty;
-                const newSubtotal = item.unit_price * newQty;
-                const newTax = taxPerUnit * newQty;
-
-                const { error: updErr } = await supabase
-                    .from("sale_items")
-                    .update({
-                        quantity: newQty,
-                        total_price: newSubtotal,
-                        tax_amount: newTax
-                    })
-                    .eq("id", item.id);
-                if (updErr) throw updErr;
-            }
-
-            // 2. Increase Product Stock
-            const { data: product } = await supabase.from("products").select("stock").eq("id", item.product_id).single();
-            const newStock = (product?.stock || 0) + returningQty;
-
-            const { error: stockErr } = await supabase
-                .from("products")
-                .update({ stock: newStock })
-                .eq("id", item.product_id);
-            if (stockErr) throw stockErr;
-
-            // 3. Log Inventory Transaction (Return)
-            const { error: transErr } = await supabase.from("inventory_transactions").insert({
-                product_id: item.product_id,
-                product_name: item.products.name,
-                transaction_type: 'return',
-                quantity_change: returningQty,
-                stock_before: product?.stock || 0,
-                stock_after: newStock,
-                related_document_id: selectedSale.sale_ref,
-                notes: `Customer return from ${selectedSale.sale_ref}`
-            });
-            if (transErr) throw transErr;
-
-            // 4. Update Sale Total (Subtract price + tax)
-            const newTotal = selectedSale.total_amount - returningTotalWithTax;
-            await supabase.from("sales").update({ total_amount: newTotal }).eq("id", selectedSale.id);
+            const newTotal = await salesService.processReturn(item, selectedSale, 1);
 
             // Refresh data
             fetchSaleDetails({ ...selectedSale, total_amount: newTotal });
@@ -413,7 +335,7 @@ export default function SalesHistoryPage() {
                     <div className="bg-white w-full max-w-4xl rounded-[3rem] shadow-2xl border border-primary/10 overflow-hidden relative flex flex-col h-full max-h-[85vh] animate-in zoom-in-95 duration-500">
                         <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-3xl -mr-40 -mt-40" />
 
-                        {/* Modal Header */}
+                        /* Modal Header */
                         <div className="p-8 lg:p-12 border-b border-primary/5 relative z-10">
                             <div className="flex justify-between items-start">
                                 <div className="space-y-4">

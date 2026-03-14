@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { UserPlus, Shield, Mail, CheckCircle, XCircle, MoreHorizontal } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { userService } from "@/services/userService";
 
 export default function UsersPage() {
     const [users, setUsers] = useState<any[]>([]);
@@ -14,7 +14,7 @@ export default function UsersPage() {
 
     async function fetchUsers() {
         setLoading(true);
-        const { data } = await supabase.from("users").select("*");
+        const { data } = await userService.fetchUsers();
         if (data) setUsers(data);
         setLoading(false);
     }
