@@ -14,10 +14,17 @@ import {
     PlusCircle,
     Users,
     X,
-    ChevronUp
+    ChevronUp,
+    Package,
+    Trash2,
+    Hash,
+    DollarSign,
+    Percent,
+    Printer
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePos } from "@/hooks/usePos";
+import { generateInvoicePDF } from "@/lib/pdf";
 
 export default function POSPage() {
     const {
@@ -46,9 +53,6 @@ export default function POSPage() {
         handleCheckout
     } = usePos();
 
-    const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
-    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-
     // Effect for real-time search limited to performance
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -63,284 +67,298 @@ export default function POSPage() {
         const rate = item.product_categories?.taxes?.rate || item.tax_rate || 0;
         return sum + (item.price * item.quantity * (rate / 100));
     }, 0);
-    const total = subtotal + tax;
+    const discount = 0; // Placeholder for now
+    const total = subtotal + tax - discount;
 
     return (
-        <div className="flex flex-col lg:flex-row h-[calc(100vh-2rem)] lg:h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
-            {/* Catalog Section - Expanded for Desktop */}
-            <div className="flex-1 flex flex-col min-w-0 h-full">
-                <header className="p-6 lg:p-10 space-y-8">
-                    <div className="flex justify-between items-center">
-                        <div className="space-y-1">
-                            <h1 className="text-4xl font-black tracking-tight text-primary">Fox Moto Terminal</h1>
-                            <p className="text-muted-foreground font-semibold flex items-center gap-2">
-                                <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-                                System Operational • POS-404
-                            </p>
+        <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
+            {/* --- CENTRAL MAIN SECTION (The Ticket) --- */}
+            <section className="flex-1 flex flex-col min-w-0 bg-white border-r border-slate-200">
+                {/* Ticket Header */}
+                <header className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-primary/5 rounded-xl text-primary">
+                            <Ticket size={24} strokeWidth={2.5} />
                         </div>
-                        <div className="flex gap-3">
-                            <button onClick={() => setIsSearchModalOpen(true)} className="lg:hidden p-3 glass-dark rounded-2xl text-primary">
-                                <Search size={24} strokeWidth={1.5} />
-                            </button>
-                            <div className="hidden lg:flex relative group w-96">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={20} strokeWidth={1.5} />
-                                <input
-                                    type="text"
-                                    placeholder="Search motorcycle parts..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 rounded-3xl bg-white shadow-sm border-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold"
-                                />
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-xl font-bold text-slate-900 tracking-tight">Active Ticket</h1>
+                                <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase tracking-wider">
+                                    {currentSale?.sale_ref || "NEW TICKET"}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-4 mt-1">
+                                <div className="flex items-center gap-1.5 cursor-pointer group">
+                                    <Users size={14} className="text-slate-400 group-hover:text-primary transition-colors" />
+                                    <select
+                                        className="bg-transparent text-xs font-semibold text-slate-500 hover:text-primary outline-none appearance-none cursor-pointer"
+                                        value={currentSale?.customer_id || ""}
+                                        onChange={(e) => updateSaleCustomer(e.target.value)}
+                                    >
+                                        <option value="">Guest Customer</option>
+                                        {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    </select>
+                                </div>
+                                <span className="text-slate-200">|</span>
+                                <div className="flex items-center gap-1.5">
+                                    <Package size={14} className="text-slate-400" />
+                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                        {cart.length} Items
+                                    </span>
+                                </div>
                             </div>
                         </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <select
+                            className="bg-slate-50 text-slate-600 text-[11px] font-bold py-2.5 px-4 rounded-xl outline-none border border-slate-200 cursor-pointer focus:ring-2 focus:ring-primary/5 transition-all"
+                            value={currentSale?.id || ""}
+                            onChange={(e) => {
+                                const sale = openSales.find(s => s.id === e.target.value);
+                                if (sale) selectSale(sale);
+                            }}
+                        >
+                            <option value="">Switch Ticket</option>
+                            {openSales.map(sale => (
+                                <option key={sale.id} value={sale.id}>
+                                    {sale.sale_ref || `ID: ${sale.id.slice(0, 8)}`}
+                                </option>
+                            ))}
+                        </select>
+                        <button
+                            onClick={() => createNewSale()}
+                            className="p-2.5 bg-white text-primary border border-slate-200 rounded-xl hover:bg-primary/5 transition-all shadow-sm active:scale-95"
+                            title="New Ticket"
+                        >
+                            <Plus size={20} strokeWidth={2.5} />
+                        </button>
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto px-6 lg:px-10 pb-24 lg:pb-10 custom-scrollbar">
-                    {error && (
-                        <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 text-sm font-bold flex items-center justify-between">
-                            <span>{error}</span>
-                            <button onClick={() => setError(null)}><X size={16} /></button>
-                        </div>
-                    )}
-
-                    {loading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <div key={i} className="aspect-[4/3] rounded-[2rem] bg-white animate-pulse shadow-sm" />)}
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                            {products.map((product) => (
-                                <button
-                                    key={product.id}
-                                    onClick={() => addToCart(product)}
-                                    className="group flex flex-col bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 text-left border border-transparent hover:border-primary/5 active:scale-[0.98]"
-                                >
-                                    <div className="relative aspect-[4/3] bg-[#F1F5F9] overflow-hidden">
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <ShoppingCart className="text-primary/10 group-hover:scale-110 transition-transform duration-700" size={60} strokeWidth={1} />
-                                        </div>
-                                        <div className="absolute top-4 left-4 flex flex-col gap-2">
-                                            <span className="px-3 py-1.5 bg-secondary text-primary text-[10px] font-black rounded-full shadow-sm tracking-wider uppercase">
-                                                {product.stock} in stock
-                                            </span>
-                                        </div>
-                                        <div className="absolute bottom-4 right-4">
-                                            <div className="w-10 h-10 bg-white rounded-xl shadow-lg flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                                                <Plus size={20} strokeWidth={2.5} />
+                {/* Ticket Body (High-Density Table) */}
+                <main className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/20">
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50/50 border-b border-slate-100">
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-16">#</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Description</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center w-32">Price</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center w-32">Qty</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right w-32">Subtotal</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-16"></th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {cart.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-32 text-center">
+                                            <div className="flex flex-col items-center justify-center opacity-20">
+                                                <div className="p-8 border-2 border-dashed border-slate-300 rounded-[3rem] mb-6">
+                                                    <ShoppingCart size={64} strokeWidth={1} />
+                                                </div>
+                                                <p className="text-xs font-bold uppercase tracking-[0.3em]">No items in ticket</p>
+                                                <p className="text-[10px] mt-2 font-medium">Use the panel on the right to search products</p>
                                             </div>
-                                        </div>
-                                    </div>
-                                    <div className="p-6 space-y-2">
-                                        <div className="space-y-0.5">
-                                            <p className="text-[9px] font-black text-accent uppercase tracking-widest">{product.brand || 'Original Part'}</p>
-                                            <h3 className="text-base font-black text-primary group-hover:text-primary transition-colors leading-tight line-clamp-2 h-10">{product.name}</h3>
-                                        </div>
-                                        <div className="flex items-center justify-between pt-2">
-                                            <span className="text-2xl font-black text-primary">${product.price.toLocaleString()}</span>
-                                            <span className="text-[9px] font-bold text-muted-foreground uppercase opacity-40">Tax Incl.</span>
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </main>
-            </div>
-
-            {/* Ticket Section - Optimized Sidebar Width */}
-            <aside className={cn(
-                "w-full lg:w-[480px] xl:w-[520px] flex flex-col bg-white lg:bg-transparent z-40 transition-all duration-500",
-                "fixed inset-x-0 bottom-0 lg:relative lg:inset-auto",
-                isMobileCartOpen ? "h-[90vh]" : "h-20 lg:h-full overflow-hidden"
-            )}>
-                {/* Mobile Handle */}
-                <button
-                    onClick={() => setIsMobileCartOpen(!isMobileCartOpen)}
-                    className="lg:hidden w-full h-20 flex items-center justify-between px-8 bg-primary text-white"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="relative">
-                            <ShoppingCart size={24} strokeWidth={1.5} />
-                            {cart.length > 0 && <span className="absolute -top-2 -right-2 w-5 h-5 bg-accent text-primary text-[10px] font-bold rounded-full flex items-center justify-center">{cart.length}</span>}
-                        </div>
-                        <span className="font-black uppercase tracking-widest text-sm">Order Overview</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <span className="text-xl font-black">${total.toLocaleString()}</span>
-                        <ChevronUp className={cn("transition-transform duration-300", isMobileCartOpen && "rotate-180")} />
-                    </div>
-                </button>
-
-                <div className="flex-1 flex flex-col glass lg:m-6 lg:rounded-[3rem] shadow-glass border-none overflow-hidden relative">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
-
-                    {/* Ticket Header */}
-                    <div className="p-6 lg:p-8 border-b border-primary/5 relative z-10">
-                        <div className="flex justify-between items-center mb-8">
-                            <div className="flex items-center gap-3">
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h2 className="text-xl font-black text-primary tracking-tight">Active Ticket</h2>
-                                        <select
-                                            className="bg-primary/5 text-primary text-[10px] font-black py-1 px-2 rounded-lg outline-none border-none cursor-pointer uppercase tracking-wider"
-                                            value={currentSale?.id || ''}
-                                            onChange={(e) => {
-                                                const sale = openSales.find(s => s.id === e.target.value);
-                                                if (sale) selectSale(sale);
-                                            }}
-                                        >
-                                            <option value="">Switch Ticket</option>
-                                            {openSales.map(sale => (
-                                                <option key={sale.id} value={sale.id}>
-                                                    {sale.sale_ref || `ID: ${sale.id.slice(0, 8)}`}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em]">{currentSale?.sale_ref || 'Terminal ID: TBX-4'}</p>
-                                </div>
-                            </div>
-                            <button onClick={createNewSale} className="p-2.5 bg-secondary text-primary rounded-xl hover:scale-110 transition-transform active:scale-95 shadow-sm">
-                                <PlusCircle size={24} strokeWidth={1.5} />
-                            </button>
-                        </div>
-
-                        {/* Customer Row */}
-                        <div className="flex items-center gap-3 p-3 glass-dark rounded-2xl group cursor-pointer hover:bg-primary/5 transition-all">
-                            <div className="w-8 h-8 bg-white rounded-lg shadow-sm flex items-center justify-center text-primary">
-                                <Users size={16} strokeWidth={1.5} />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">Customer</p>
-                                <select
-                                    className="w-full bg-transparent font-black text-xs uppercase outline-none text-primary appearance-none cursor-pointer"
-                                    value={currentSale?.customer_id || ''}
-                                    onChange={(e) => updateSaleCustomer(e.target.value)}
-                                >
-                                    <option value="">Select Assignee</option>
-                                    {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Cart Items */}
-                    <div className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-5 custom-scrollbar relative z-10">
-                        {cart.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-20 px-8">
-                                <div className="p-8 bg-primary/5 rounded-[2rem] animate-pulse">
-                                    <ShoppingCart size={48} strokeWidth={1} />
-                                </div>
-                                <p className="text-[10px] font-bold text-primary uppercase tracking-[0.3em] leading-relaxed text-center">System Ready<br />Assign items to ticket</p>
-                            </div>
-                        ) : (
-                            cart.map((item) => (
-                                <div key={item.id} className="group flex gap-4 items-start animate-in slide-in-from-right-4 duration-500">
-                                    <div className="w-16 h-16 bg-primary/5 rounded-xl flex items-center justify-center shrink-0 border border-primary/5 relative overflow-hidden">
-                                        <ShoppingCart className="text-primary/30" size={20} strokeWidth={1.5} />
-                                    </div>
-                                    <div className="flex-1 space-y-1.5 min-w-0">
-                                        <div className="flex justify-between items-start">
-                                            <h4 className="font-black text-primary text-[13px] uppercase leading-tight line-clamp-1 group-hover:text-accent transition-colors">{item.name}</h4>
-                                            <button onClick={() => removeFromCart(item.id)} className="p-1 text-muted-foreground hover:text-red-500 transition-all">
-                                                <X size={14} strokeWidth={2} />
-                                            </button>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-1 bg-white rounded-lg shadow-sm border border-primary/5 p-0.5">
-                                                <button onClick={() => updateQuantity(item.id, -1)} className="p-1 hover:bg-primary/5 text-primary rounded-md transition-colors"><Minus size={10} strokeWidth={3} /></button>
-                                                <span className="w-6 text-center font-black text-xs">{item.quantity}</span>
-                                                <button onClick={() => updateQuantity(item.id, 1)} className="p-1 hover:bg-primary/5 text-primary rounded-md transition-colors"><Plus size={10} strokeWidth={3} /></button>
-                                            </div>
-                                            <div className="flex flex-col items-end">
-                                                <div className="flex items-center gap-1">
-                                                    <span className="text-[10px] font-bold text-muted-foreground">$</span>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    cart.map((item, index) => (
+                                        <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <span className="text-[11px] font-bold text-slate-400">{String(index + 1).padStart(2, '0')}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{item.name}</span>
+                                                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">{item.brand || 'SKU-GENERIC'}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <span className="text-[11px] font-bold text-slate-300">$</span>
                                                     <input
                                                         type="number"
                                                         value={item.price}
                                                         onChange={(e) => updateItemPrice(item.id, parseFloat(e.target.value) || 0)}
-                                                        className="w-20 bg-transparent border-b border-primary/10 text-right font-black text-primary text-[13px] outline-none focus:border-primary transition-colors"
+                                                        className="w-20 bg-transparent border-none text-center font-bold text-slate-700 text-sm outline-none focus:ring-0 p-0"
                                                     />
                                                 </div>
-                                                <span className="text-[9px] font-bold text-muted-foreground opacity-40 uppercase">Total: ${(item.price * item.quantity).toLocaleString()}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center justify-center gap-3">
+                                                    <button
+                                                        onClick={() => updateQuantity(item.id, -1)}
+                                                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-all border border-slate-100 shadow-sm"
+                                                    >
+                                                        <Minus size={12} strokeWidth={3} />
+                                                    </button>
+                                                    <span className="w-6 text-center text-sm font-bold text-slate-900">{item.quantity}</span>
+                                                    <button
+                                                        onClick={() => updateQuantity(item.id, 1)}
+                                                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-all border border-slate-100 shadow-sm"
+                                                    >
+                                                        <Plus size={12} strokeWidth={3} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <span className="text-sm font-bold text-slate-900">${(item.price * item.quantity).toLocaleString()}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <button
+                                                    onClick={() => removeFromCart(item.id)}
+                                                    className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Trash2 size={16} strokeWidth={2} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
                     </div>
+                </main>
 
-                    {/* Checkout Footer */}
-                    <div className="p-6 lg:p-8 bg-primary relative z-20 text-white space-y-6">
-                        <div className="space-y-3">
-                            <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest opacity-50">
-                                <span>Net Subtotal</span>
-                                <span>${subtotal.toLocaleString()}</span>
+                {/* Bottom Summary Section */}
+                <footer className="p-8 bg-white border-t border-slate-100">
+                    <div className="flex flex-col lg:flex-row items-end lg:items-center justify-between gap-8">
+                        {/* Summary Cards */}
+                        <div className="flex flex-wrap items-center gap-4 w-full">
+                            <div className="flex-1 min-w-[140px] p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                    <Hash size={12} /> Subtotal
+                                </p>
+                                <p className="text-xl font-bold text-slate-900 italic tracking-tight">${subtotal.toLocaleString()}</p>
                             </div>
-                            <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest opacity-50">
-                                <span>Sales TAX</span>
-                                <span>${tax.toLocaleString()}</span>
+                            <div className="flex-1 min-w-[140px] p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                    <Percent size={12} /> Taxes
+                                </p>
+                                <p className="text-xl font-bold text-slate-900 italic tracking-tight">${tax.toLocaleString()}</p>
                             </div>
-                            <div className="flex flex-col gap-1 pt-4 border-t border-white/10">
-                                <div className="flex justify-between items-baseline">
-                                    <span className="text-[9px] font-black uppercase tracking-[0.4em] opacity-30">Grand Total</span>
-                                    <span className="text-4xl lg:text-5xl font-black tracking-tighter italic">${total.toLocaleString()}</span>
-                                </div>
+                            <div className="flex-1 min-w-[140px] p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                    <DollarSign size={12} /> Discounts
+                                </p>
+                                <p className="text-xl font-bold text-slate-900 italic tracking-tight text-red-500">-${discount.toLocaleString()}</p>
                             </div>
                         </div>
 
-
-                        <button
-                            disabled={cart.length === 0 || processing || !currentSale}
-                            onClick={handleCheckout}
-                            className="w-full py-6 bg-accent text-white rounded-[2rem] text-xl font-black italic shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-20 flex items-center justify-center gap-3 tracking-tighter"
-                        >
-                            {processing ? <Loader2 className="animate-spin" /> : <CheckCircle2 size={24} strokeWidth={2} />}
-                            {processing ? "FINALIZING..." : "CLOSE TRANSACTION"}
-                        </button>
+                        {/* Finalize Button */}
+                        <div className="w-full lg:w-auto flex items-center gap-4 shrink-0">
+                            <div className="text-right flex flex-col items-end pr-2">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Payable</span>
+                                <span className="text-4xl font-black text-primary italic tracking-tighter leading-none">${total.toLocaleString()}</span>
+                            </div>
+                            <button
+                                disabled={cart.length === 0 || !currentSale}
+                                onClick={() => generateInvoicePDF(currentSale, cart, subtotal, tax, total)}
+                                className="h-[72px] px-6 bg-slate-100 text-slate-500 rounded-[2rem] text-lg font-bold flex items-center justify-center gap-3 hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-20 disabled:scale-100"
+                                title="Print Invoice / PDF"
+                            >
+                                <Printer size={24} strokeWidth={2.5} />
+                            </button>
+                            <button
+                                disabled={cart.length === 0 || processing || !currentSale}
+                                onClick={handleCheckout}
+                                className="h-[72px] px-10 bg-primary text-white rounded-[2rem] text-lg font-bold flex items-center justify-center gap-3 shadow-xl shadow-primary/20 hover:scale-[1.02] hover:shadow-2xl transition-all active:scale-95 disabled:opacity-20 disabled:scale-100 uppercase tracking-tight"
+                            >
+                                {processing ? (
+                                    <Loader2 className="animate-spin" size={24} />
+                                ) : (
+                                    <CheckCircle2 size={24} strokeWidth={2.5} />
+                                )}
+                                <span>{processing ? "Processing" : "Finalize Order"}</span>
+                            </button>
+                        </div>
                     </div>
+                </footer>
+            </section>
+
+            {/* --- RIGHT SIDEBAR (Product Search) --- */}
+            <aside className="w-[380px] xl:w-[440px] bg-slate-50 flex flex-col shrink-0">
+                {/* Search Header */}
+                <div className="p-6 bg-white border-b border-slate-200">
+                    <div className="relative group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Find products or scan..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-primary/10 transition-all font-semibold text-sm text-slate-700"
+                        />
+                    </div>
+                </div>
+
+                {/* Search Results */}
+                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                    {loading ? (
+                        <div className="space-y-4">
+                            {[1, 2, 3, 4, 5, 6].map(i => (
+                                <div key={i} className="h-24 bg-white rounded-2xl animate-pulse shadow-sm border border-slate-100" />
+                            ))}
+                        </div>
+                    ) : products.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center opacity-40 px-8 text-center">
+                            <Search size={48} strokeWidth={1} className="mb-4" />
+                            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">No products found</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {products.map((product) => (
+                                <div
+                                    key={product.id}
+                                    className="group bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-primary/20 transition-all flex items-center gap-4"
+                                >
+                                    <div className="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden relative">
+                                        <Package className="text-slate-300" size={24} strokeWidth={1.5} />
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex flex-col">
+                                            <h4 className="text-sm font-bold text-slate-900 truncate tracking-tight">{product.name}</h4>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{product.brand || 'Parts Dept'}</p>
+                                        </div>
+                                        <div className="flex items-center justify-between mt-2">
+                                            <span className="text-lg font-bold text-primary italic">${product.price.toLocaleString()}</span>
+                                            <button
+                                                onClick={() => addToCart(product)}
+                                                className="px-3 py-1.5 bg-slate-50 hover:bg-primary hover:text-white text-primary text-[10px] font-black uppercase tracking-widest rounded-lg transition-all border border-slate-100 group-hover:border-primary/10"
+                                            >
+                                                Add to Cart
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Stock Indicator */}
+                                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span className={cn(
+                                            "w-1.5 h-1.5 rounded-full animate-pulse",
+                                            product.stock > 10 ? "bg-green-500" : "bg-orange-500"
+                                        )} />
+                                        <span className="text-[9px] font-bold text-slate-400">{product.stock} left</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </aside>
 
-            {/* Float Search Modal (Mobile) */}
-            {isSearchModalOpen && (
-                <div className="fixed inset-0 z-[100] p-6 lg:hidden bg-black/60 backdrop-blur-xl animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[2.5rem] p-8 space-y-6 shadow-2xl">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-2xl font-black text-primary italic uppercase tracking-tight">Quick Finder</h3>
-                            <button onClick={() => setIsSearchModalOpen(false)} className="p-2 glass-dark rounded-xl text-primary"><X size={24} /></button>
-                        </div>
-                        <div className="relative">
-                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-primary" size={24} strokeWidth={1.5} />
-                            <input
-                                autoFocus
-                                type="text"
-                                placeholder="Part name or ID..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-14 pr-6 py-6 rounded-[2rem] bg-secondary/30 font-black text-lg text-primary placeholder:text-primary/20 outline-none"
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <button className="py-4 glass-dark rounded-2xl font-black text-xs uppercase tracking-widest">Filters</button>
-                            <button onClick={() => setIsSearchModalOpen(false)} className="py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest">Search</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Success Modal */}
+            {/* Global States */}
             {showSuccess && (
-                <div className="fixed inset-0 bg-primary/95 backdrop-blur-3xl flex items-center justify-center z-[110] animate-in fade-in duration-700">
-                    <div className="text-center p-12 space-y-8 animate-in zoom-in duration-500">
-                        <div className="w-48 h-48 bg-white text-primary rounded-[4rem] flex items-center justify-center mx-auto shadow-2xl">
-                            <CheckCircle2 size={120} strokeWidth={1.5} className="animate-bounce" />
+                <div className="fixed inset-0 bg-primary/98 backdrop-blur-3xl flex items-center justify-center z-[110] animate-in fade-in duration-700">
+                    <div className="text-center p-12 space-y-10 animate-in zoom-in duration-700">
+                        <div className="w-64 h-64 bg-white text-primary rounded-[5rem] flex items-center justify-center mx-auto shadow-2xl">
+                            <CheckCircle2 size={140} strokeWidth={1.5} className="animate-bounce" />
                         </div>
-                        <div className="space-y-4">
-                            <h3 className="text-6xl font-black text-white italic tracking-tighter uppercase underline decoration-8 decoration-accent underline-offset-8">Order Confirmed</h3>
-                            <p className="text-white/60 font-black text-xs uppercase tracking-[0.4em]">Inventory sync complete • Receipt generating</p>
+                        <div className="space-y-6">
+                            <h3 className="text-7xl font-black text-white italic tracking-tighter uppercase leading-none">Order Dispatched</h3>
+                            <p className="text-accent font-black text-sm uppercase tracking-[0.5em] animate-pulse">Syncing Ledger • Generating Assets</p>
                         </div>
                     </div>
                 </div>
@@ -348,3 +366,4 @@ export default function POSPage() {
         </div>
     );
 }
+

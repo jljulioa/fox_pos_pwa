@@ -4,10 +4,13 @@ import { Sidebar } from "@/components/Sidebar";
 import { usePathname } from "next/navigation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { LayoutProvider, useLayout } from "@/context/LayoutContext";
 
 function ContentWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const { loading } = useAuth();
+    const { sidebarCollapsed: isCollapsed } = useLayout();
     const isLoginPage = pathname === "/login";
 
     if (loading) {
@@ -21,6 +24,8 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
         );
     }
 
+    const isPOSPage = pathname === "/pos";
+
     if (isLoginPage) {
         return <>{children}</>;
     }
@@ -29,15 +34,19 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
         <div className="flex min-h-screen bg-background">
             <Sidebar />
 
-            <main className="flex-1 w-full transition-all duration-500 ease-in-out lg:pl-[72px] lg:group-hover:pl-72 transition-[padding]">
-                {/* 
-                  - pt-24: Space for the floating mobile top bar
-                  - lg:pt-8: Standard padding on desktop
-                  - px-6/lg:px-10: Responsive horizontal breathability
-                */}
-                <div className="pt-24 pb-8 px-6 lg:pt-8 lg:px-10 max-w-[1920px] mx-auto">
-                    {children}
-                </div>
+            <main className={cn(
+                "flex-1 w-full transition-all duration-[0.8s] ease-[cubic-bezier(0.4,0,0.2,1)]",
+                isCollapsed ? "lg:ml-[96px]" : "lg:ml-[288px]"
+            )}>
+                {isPOSPage ? (
+                    <div className="h-screen w-full overflow-hidden">
+                        {children}
+                    </div>
+                ) : (
+                    <div className="pt-24 pb-8 px-6 lg:pt-8 lg:px-10 max-w-[1920px] mx-auto">
+                        {children}
+                    </div>
+                )}
             </main>
         </div>
     );
@@ -45,8 +54,10 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     return (
-        <AuthProvider>
-            <ContentWrapper>{children}</ContentWrapper>
-        </AuthProvider>
+        <LayoutProvider>
+            <AuthProvider>
+                <ContentWrapper>{children}</ContentWrapper>
+            </AuthProvider>
+        </LayoutProvider>
     );
 }

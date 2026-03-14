@@ -55,10 +55,12 @@ const sections = [
     }
 ];
 
+import { useLayout } from "@/context/LayoutContext";
+
 export function Sidebar() {
     const pathname = usePathname();
     const { user, logout } = useAuth();
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const { sidebarCollapsed: isCollapsed, setSidebarCollapsed: setIsCollapsed } = useLayout();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Close mobile menu on route change
@@ -69,7 +71,7 @@ export function Sidebar() {
     return (
         <>
             {/* --- MOBILE TOP BAR (Floating & Glassy) --- */}
-            <div className="lg:hidden fixed top-4 left-4 right-4 h-14 glass rounded-2xl z-[60] flex items-center justify-between px-4 shadow-lg shadow-black/5">
+            <div className="lg:hidden fixed top-0 left-0 right-0 h-14 glass z-[60] flex items-center justify-between px-4 shadow-lg shadow-black/5">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-primary/20 shadow-lg">
                         <LayoutDashboard className="w-5 h-5 text-white" />
