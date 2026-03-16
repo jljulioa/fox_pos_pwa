@@ -4,29 +4,14 @@ import { useState, useEffect } from "react";
 import {
     Package,
     Search,
-    Filter,
     AlertCircle,
-    Plus,
-    Edit3,
-    X,
-    Loader2,
-    CheckCircle2,
-    Trash2,
-    Tag,
-    Hash,
-    Box,
-    Receipt,
-    FileText,
-    DollarSign,
-    Layers,
-    ArrowRight,
-    TrendingUp,
-    Store
+    Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { inventoryService } from "@/services/inventoryService";
 import { InventoryDesktopView } from "./_components/InventoryDesktopView";
 import { InventoryMobileView } from "./_components/InventoryMobileView";
+import { ProductModal } from "./_components/ProductModal";
 
 export default function InventoryPage() {
     const [products, setProducts] = useState<any[]>([]);
@@ -198,31 +183,25 @@ export default function InventoryPage() {
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
             {/* Header Section */}
-            <header className="p-6 lg:p-10 space-y-8 shrink-0">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                                <Package size={24} strokeWidth={1.5} />
-                            </div>
-                            <h1 className="text-4xl font-black tracking-tight text-primary">Inventory</h1>
+            <header className="p-4 md:p-6 lg:p-10 pb-4 md:pb-6 space-y-4 md:space-y-8 shrink-0">
+                <div className="flex flex-row justify-between items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="hidden md:flex w-12 h-12 bg-primary rounded-2xl items-center justify-center text-white shadow-lg shadow-primary/20 shrink-0">
+                            <Package size={24} strokeWidth={1.5} />
                         </div>
-                        <p className="text-muted-foreground font-semibold flex items-center gap-2">
-                            <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-                            Master Workshop Product Catalog
-                        </p>
+                        <h1 className="text-2xl md:text-4xl font-black tracking-tight text-primary">Inventory</h1>
                     </div>
 
                     <button
                         onClick={openAddModal}
-                        className="bg-primary text-white px-8 py-4 rounded-[1.5rem] font-black flex items-center gap-3 shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-widest"
+                        className="bg-primary text-white p-4 md:px-8 md:py-4 rounded-full md:rounded-[1.5rem] font-black flex items-center justify-center gap-0 md:gap-3 shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-widest fixed bottom-6 right-6 md:static z-50 md:z-auto aspect-square md:aspect-auto"
                     >
-                        <Plus size={18} strokeWidth={1.5} />
-                        Add New Part
+                        <Plus className="w-6 h-6 md:w-[18px] md:h-[18px]" strokeWidth={2.5} />
+                        <span className="hidden md:inline">Add New Part</span>
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-center">
                     <div className="lg:col-span-6 relative group">
                         <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={20} strokeWidth={1.5} />
                         <input
@@ -230,14 +209,14 @@ export default function InventoryPage() {
                             placeholder="Filter by name, SKU or brand..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-14 pr-6 py-4 rounded-3xl bg-white shadow-sm border-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold italic text-primary"
+                            className="w-full pl-12 pr-6 py-3 md:pl-14 md:py-4 rounded-full md:rounded-3xl bg-white shadow-sm border-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold italic text-primary text-sm md:text-base cursor-text"
                         />
                     </div>
                 </div>
             </header>
 
             {/* Main Catalog Space */}
-            <main className="flex-1 overflow-y-auto px-6 lg:px-10 pb-10 custom-scrollbar">
+            <main className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-10 pb-20 md:pb-10 custom-scrollbar">
                 {pageError && (
                     <div className="mb-8 p-6 bg-red-50 text-red-600 rounded-[2.5rem] border border-red-100 flex items-center gap-5 shadow-sm">
                         <AlertCircle size={24} strokeWidth={1.5} />
@@ -267,218 +246,17 @@ export default function InventoryPage() {
                 </div>
             </main>
 
-            {/* MODAL - High Fidelity Overlay */}
-            {showModal && (
-                <div className="fixed inset-0 bg-primary/20 backdrop-blur-xl flex items-center justify-center z-[100] p-4 lg:p-10 animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl border border-primary/10 overflow-hidden relative flex flex-col h-fit max-h-[90vh] animate-in zoom-in-95 duration-500">
-                        {/* Modal Header */}
-                        <div className="p-8 lg:p-10 border-b border-primary/5 flex items-center justify-between">
-                            <div className="flex items-center gap-5">
-                                <div className="w-14 h-14 bg-primary text-white rounded-3xl flex items-center justify-center shadow-xl shadow-primary/30">
-                                    {isEditing ? <Edit3 size={24} strokeWidth={1.5} /> : <Plus size={24} strokeWidth={1.5} />}
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-black text-primary uppercase italic tracking-tight">
-                                        {isEditing ? "Modify Catalog Entry" : "Register Spare Part"}
-                                    </h3>
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-60">
-                                        {isEditing ? `System UID: ${formData.id.split('-')[0]}...` : "System-wide inventory integration"}
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setShowModal(false)}
-                                className="p-3 bg-secondary/50 text-primary rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all active:scale-95"
-                            >
-                                <X size={20} strokeWidth={1.5} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 lg:p-10 space-y-8 custom-scrollbar">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="md:col-span-2 space-y-2">
-                                    <label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-2">Product Name</label>
-                                    <input
-                                        required
-                                        value={formData.name}
-                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full px-6 py-4 rounded-3xl bg-secondary/20 border-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-primary"
-                                        placeholder="e.g. Master Brake Pad HD"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-2">Brand / Manufacturer</label>
-                                    <div className="relative">
-                                        <Tag size={16} strokeWidth={1.5} className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/40" />
-                                        <input
-                                            required
-                                            value={formData.brand}
-                                            onChange={e => setFormData({ ...formData, brand: e.target.value })}
-                                            className="w-full pl-12 pr-6 py-4 rounded-3xl bg-secondary/20 border-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-primary"
-                                            placeholder="Brand Name"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-2">Workshop Category</label>
-                                    <div className="relative">
-                                        <Layers size={16} strokeWidth={1.5} className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/40" />
-                                        <select
-                                            value={formData.category_id}
-                                            onChange={e => setFormData({ ...formData, category_id: e.target.value })}
-                                            className="w-full pl-12 pr-10 py-4 rounded-3xl bg-secondary/20 border-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-primary appearance-none cursor-pointer"
-                                        >
-                                            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-2">Internal SKU Code</label>
-                                    <div className="relative">
-                                        <Hash size={16} strokeWidth={1.5} className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/40" />
-                                        <input
-                                            disabled={!isEditing}
-                                            value={isEditing ? formData.sku : "AUTO-GENERATING..."}
-                                            onChange={e => setFormData({ ...formData, sku: e.target.value })}
-                                            className="w-full pl-12 pr-6 py-4 rounded-3xl bg-secondary/40 border-none focus:ring-2 focus:ring-primary/20 transition-all font-black italic text-primary/60 cursor-not-allowed"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-2">Manuf. Reference</label>
-                                    <div className="relative">
-                                        <FileText size={16} strokeWidth={1.5} className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/40" />
-                                        <input
-                                            value={formData.reference}
-                                            onChange={e => setFormData({ ...formData, reference: e.target.value })}
-                                            className="w-full pl-12 pr-6 py-4 rounded-3xl bg-secondary/20 border-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-primary"
-                                            placeholder="REF-00X"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="md:col-span-2 grid grid-cols-2 gap-4 p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em] ml-2">Purchase Cost</label>
-                                        <div className="relative">
-                                            <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-primary/40">$</span>
-                                            <input
-                                                required
-                                                type="number"
-                                                step="0.01"
-                                                value={formData.cost}
-                                                onChange={e => setFormData({ ...formData, cost: e.target.value })}
-                                                className="w-full pl-10 pr-6 py-4 rounded-3xl bg-white border-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-primary"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-2 italic underline decoration-accent underline-offset-8">Public Retail Price</label>
-                                        <div className="relative">
-                                            <DollarSign size={18} strokeWidth={1.5} className="absolute left-5 top-1/2 -translate-y-1/2 text-accent" />
-                                            <input
-                                                required
-                                                type="number"
-                                                step="0.01"
-                                                value={formData.price}
-                                                onChange={e => setFormData({ ...formData, price: e.target.value })}
-                                                className="w-full pl-12 pr-6 py-4 rounded-3xl bg-white shadow-xl shadow-primary/5 border-none focus:ring-2 focus:ring-accent transition-all font-black text-2xl text-accent italic"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="md:col-span-2 grid grid-cols-3 gap-4">
-                                    <div className="space-y-2 p-6 bg-secondary/20 rounded-[2rem]">
-                                        <label className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em] block text-center mb-2">Available Stock</label>
-                                        <input
-                                            required
-                                            type="number"
-                                            value={formData.stock}
-                                            onChange={e => setFormData({ ...formData, stock: e.target.value })}
-                                            className="w-full py-4 bg-white rounded-2xl border-none text-center text-2xl font-black text-primary italic shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2 p-6 bg-secondary/10 rounded-[2rem]">
-                                        <label className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em] block text-center mb-2">Minimum stock</label>
-                                        <input
-                                            type="number"
-                                            value={formData.min_stock}
-                                            onChange={e => setFormData({ ...formData, min_stock: e.target.value })}
-                                            className="w-full py-4 bg-white/50 rounded-2xl border-none text-center text-xl font-bold text-primary/60 shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-2 p-6 bg-secondary/10 rounded-[2rem]">
-                                        <label className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em] block text-center mb-2">Maximum stock</label>
-                                        <input
-                                            type="number"
-                                            value={formData.max_stock}
-                                            onChange={e => setFormData({ ...formData, max_stock: e.target.value })}
-                                            className="w-full py-4 bg-white/50 rounded-2xl border-none text-center text-xl font-bold text-primary/60 shadow-inner"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div
-                                    onClick={() => setFormData({ ...formData, taxable: !formData.taxable })}
-                                    className={cn(
-                                        "md:col-span-2 p-6 rounded-[2rem] border transition-all cursor-pointer flex items-center justify-between group",
-                                        formData.taxable ? "bg-accent/5 border-accent/20" : "bg-red-50/50 border-red-100"
-                                    )}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className={cn(
-                                            "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors",
-                                            formData.taxable ? "bg-accent text-white" : "bg-red-100 text-red-500"
-                                        )}>
-                                            <Receipt size={24} strokeWidth={1.5} />
-                                        </div>
-                                        <div>
-                                            <p className={cn(
-                                                "text-sm font-black uppercase tracking-widest",
-                                                formData.taxable ? "text-accent" : "text-red-500"
-                                            )}>{formData.taxable ? "Taxable Product" : "Tax Exempt"}</p>
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase opacity-60">Apply government sales tax on checkout</p>
-                                        </div>
-                                    </div>
-                                    <div className={cn(
-                                        "w-14 h-8 rounded-full relative transition-all shadow-inner border",
-                                        formData.taxable ? "bg-accent border-accent/20" : "bg-red-100 border-red-200"
-                                    )}>
-                                        <div className={cn(
-                                            "absolute top-1 w-5 h-5 bg-white rounded-full transition-all shadow-md shadow-black/10",
-                                            formData.taxable ? "left-7" : "left-1"
-                                        )} />
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-
-                        {/* Modal Footer */}
-                        <div className="p-8 lg:p-10 border-t border-primary/5 bg-secondary/10 flex gap-4">
-                            <button
-                                type="button"
-                                onClick={() => setShowModal(false)}
-                                className="flex-1 py-5 rounded-[1.5rem] border border-primary/10 font-black text-xs uppercase tracking-widest text-primary/40 hover:bg-white transition-all active:scale-95"
-                            >
-                                Discard
-                            </button>
-                            <button
-                                onClick={handleSubmit}
-                                disabled={submitting}
-                                className="flex-[2] py-5 bg-primary text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
-                            >
-                                {submitting ? <Loader2 className="animate-spin" size={20} /> : <CheckCircle2 size={20} strokeWidth={1.5} />}
-                                {isEditing ? "Update Workshop Catalog" : "Commit to Inventory"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Extracted Product Modal */}
+            <ProductModal
+                showModal={showModal}
+                setShowModal={setShowModal}
+                isEditing={isEditing}
+                formData={formData}
+                setFormData={setFormData}
+                categories={categories}
+                handleSubmit={handleSubmit}
+                submitting={submitting}
+            />
         </div>
     );
 }
