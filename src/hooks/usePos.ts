@@ -48,9 +48,51 @@ export function usePos() {
 
     const fetchInitialData = useCallback(async () => {
         setLoading(true);
-        await Promise.all([fetchProducts(), fetchOpenSales(), fetchCustomers()]);
+        try {
+            const [productsResult, customersResult, salesResult] = await Promise.all([
+                posService.fetchProducts(""),
+                posService.fetchCustomers(),
+                posService.fetchOpenSales()
+            ]);
+            
+            if (productsResult.data) setProducts(productsResult.data || []);
+            if (customersResult.data) setCustomers(customersResult.data || []);
+            
+            const sales = salesResult.data || [];
+            setOpenSales(sales);
+            
+            if (sales.length > 0) {
+                const sale = sales[0];
+                setCurrentSale(sale);
+                const { data: items } = await posService.fetchSaleItems(sale.id);
+                if (items) {
+                    const formattedCart = items.map(item => ({
+                        ...item.products,
+                        quantity: item.quantity,
+                        sale_item_id: item.id,
+                        tax_rate: item.products.product_categories?.taxes?.rate || 0
+                    })).filter(item => !!item.id);
+                    setCart(formattedCart);
+                } else {
+                    setCart([]);
+                }
+            } else {
+                const DEFAULT_CUSTOMER_ID = '22222222-2222-2222-2222-222222222222';
+                const { data: userData } = await posService.getAdminUser();
+                const { data: newSale } = await posService.createSale(DEFAULT_CUSTOMER_ID, userData?.id);
+                if (newSale) {
+                    setOpenSales([newSale]);
+                    setCurrentSale(newSale);
+                    setCart([]);
+                }
+            }
+        } catch (err: any) {
+            console.error("Error initializing POS:", err);
+            setError("Failed to initialize POS");
+        }
         setLoading(false);
-    }, [fetchProducts, fetchOpenSales, fetchCustomers]);
+    }, []);
+
 
     useEffect(() => {
         fetchInitialData();
