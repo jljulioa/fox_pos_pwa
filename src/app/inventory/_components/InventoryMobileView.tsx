@@ -36,11 +36,11 @@ export function InventoryMobileView({ products, loading, onEdit, onDelete }: Inv
     }
 
     return (
-        <div className="space-y-3 pb-24">
+        <div className="space-y-2 pb-8">
             {products.map((product) => (
                 <div
                     key={product.id}
-                    className="bg-white rounded-[1.5rem] p-4 shadow-sm border border-primary/5 active:scale-[0.98] transition-all"
+                    className="bg-white rounded-[1.2rem] p-3 shadow-sm border border-primary/5 active:scale-[0.98] transition-all"
                 >
                     <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0 flex-1">

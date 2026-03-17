@@ -186,7 +186,7 @@ export default function PurchasesPage() {
 
   if (currentView === "new_purchase") {
     return (
-      <div className="flex flex-col h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
+      <div className="flex flex-col h-[calc(100vh-8.5rem)] lg:h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
         <header className="p-6 lg:p-10 border-b border-primary/5 bg-white shrink-0 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={() => setCurrentView("list")} className="p-3 bg-secondary/50 rounded-2xl hover:bg-secondary text-primary transition-all">
@@ -345,7 +345,7 @@ export default function PurchasesPage() {
 
   if (currentView === "view_purchase" && selectedPurchase) {
     return (
-      <div className="flex flex-col h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
+      <div className="flex flex-col h-[calc(100vh-8.5rem)] lg:h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
         <header className="p-6 lg:p-10 border-b border-primary/5 bg-white shrink-0 flex items-center gap-4">
           <button onClick={() => setCurrentView("list")} className="p-3 bg-secondary/50 rounded-2xl hover:bg-secondary text-primary transition-all">
             <ArrowLeft size={20} strokeWidth={1.5} />
@@ -451,7 +451,7 @@ export default function PurchasesPage() {
 
   // --- List View ---
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
+    <div className="flex flex-col h-[calc(100vh-8.5rem)] lg:h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
       <header className="p-6 lg:p-10 space-y-8 shrink-0">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">

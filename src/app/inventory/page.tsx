@@ -5,7 +5,10 @@ import {
     Package,
     Search,
     AlertCircle,
-    Plus
+    Plus,
+    SlidersHorizontal,
+    X,
+    Filter
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { inventoryService } from "@/services/inventoryService";
@@ -38,6 +41,13 @@ export default function InventoryPage() {
         taxable: true
     });
     const [categories, setCategories] = useState<any[]>([]);
+
+    // Filter State
+    const [showFilters, setShowFilters] = useState(false);
+    const [filterCategory, setFilterCategory] = useState<string>("all");
+    const [filterMinPrice, setFilterMinPrice] = useState<string>("");
+    const [filterMaxPrice, setFilterMaxPrice] = useState<string>("");
+    const [filterOutOfStock, setFilterOutOfStock] = useState(false);
 
     useEffect(() => {
         fetchInitialData();
@@ -174,57 +184,87 @@ export default function InventoryPage() {
         }
     };
 
-    const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.brand?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredProducts = products.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.brand?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesCategory = filterCategory === "all" || p.category_id === filterCategory;
+        
+        const price = parseFloat(p.price);
+        const matchesMinPrice = filterMinPrice === "" || price >= parseFloat(filterMinPrice);
+        const matchesMaxPrice = filterMaxPrice === "" || price <= parseFloat(filterMaxPrice);
+        
+        const matchesStock = !filterOutOfStock || parseInt(p.stock) <= 0;
+
+        return matchesSearch && matchesCategory && matchesMinPrice && matchesMaxPrice && matchesStock;
+    });
+
+    const resetFilters = () => {
+        setFilterCategory("all");
+        setFilterMinPrice("");
+        setFilterMaxPrice("");
+        setFilterOutOfStock(false);
+    };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
+        <div className="flex flex-col h-[calc(100vh-8.5rem)] lg:h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
             {/* Header Section */}
-            <header className="p-4 md:p-6 lg:p-10 pb-4 md:pb-6 space-y-4 md:space-y-8 shrink-0">
-                <div className="flex flex-row justify-between items-center gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="hidden md:flex w-12 h-12 bg-primary rounded-2xl items-center justify-center text-white shadow-lg shadow-primary/20 shrink-0">
-                            <Package size={24} strokeWidth={1.5} />
+            <header className="p-3 md:p-6 lg:p-10 pb-2 md:pb-6 space-y-3 md:space-y-6 shrink-0">
+                <div className="flex flex-row justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <div className="hidden md:flex w-10 h-10 bg-primary rounded-xl items-center justify-center text-white shadow-lg shadow-primary/20 shrink-0">
+                            <Package size={20} strokeWidth={1.5} />
                         </div>
-                        <h1 className="text-2xl md:text-4xl font-black tracking-tight text-primary">Inventory</h1>
+                        <h1 className="text-xl md:text-3xl font-black tracking-tight text-primary uppercase italic">Inventory</h1>
                     </div>
 
                     <button
                         onClick={openAddModal}
-                        className="bg-primary text-white p-4 md:px-8 md:py-4 rounded-full md:rounded-[1.5rem] font-black flex items-center justify-center gap-0 md:gap-3 shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-widest fixed bottom-6 right-6 md:static z-50 md:z-auto aspect-square md:aspect-auto"
+                        className="bg-primary text-white h-10 px-4 md:px-8 rounded-xl md:rounded-2xl font-black flex items-center justify-center gap-2 shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-all text-[10px] md:text-xs uppercase tracking-widest shrink-0"
                     >
-                        <Plus className="w-6 h-6 md:w-[18px] md:h-[18px]" strokeWidth={2.5} />
-                        <span className="hidden md:inline">Add New Part</span>
+                        <Plus className="w-4 h-4" strokeWidth={3} />
+                        <span className="hidden sm:inline">Add Part</span>
+                        <span className="sm:hidden">New</span>
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-center">
-                    <div className="lg:col-span-6 relative group">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={20} strokeWidth={1.5} />
+                <div className="flex items-center gap-2">
+                    <div className="relative flex-1 group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={16} strokeWidth={2} />
                         <input
                             type="text"
-                            placeholder="Filter by name, SKU or brand..."
+                            placeholder="Search parts..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-12 pr-6 py-3 md:pl-14 md:py-4 rounded-full md:rounded-3xl bg-white shadow-sm border-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold italic text-primary text-sm md:text-base cursor-text"
+                            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white shadow-sm border-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-primary text-xs cursor-text"
                         />
                     </div>
+                    <button
+                        onClick={() => setShowFilters(true)}
+                        className={cn(
+                            "p-2.5 rounded-xl border transition-all flex items-center gap-2",
+                            (filterCategory !== "all" || filterMinPrice !== "" || filterMaxPrice !== "" || filterOutOfStock)
+                                ? "bg-primary text-white border-primary shadow-md"
+                                : "bg-white text-primary border-primary/10 hover:bg-primary/5"
+                        )}
+                    >
+                        <SlidersHorizontal size={18} strokeWidth={2} />
+                        <span className="hidden md:inline text-xs font-black uppercase tracking-widest">Filters</span>
+                    </button>
                 </div>
             </header>
 
             {/* Main Catalog Space */}
-            <main className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-10 pb-20 md:pb-10 custom-scrollbar">
+            <main className="flex-1 overflow-y-auto px-3 md:px-6 lg:px-10 pb-6 md:pb-10 custom-scrollbar">
                 {pageError && (
-                    <div className="mb-8 p-6 bg-red-50 text-red-600 rounded-[2.5rem] border border-red-100 flex items-center gap-5 shadow-sm">
-                        <AlertCircle size={24} strokeWidth={1.5} />
+                    <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-3 shadow-sm">
+                        <AlertCircle size={20} strokeWidth={2} />
                         <div className="flex-1">
-                            <p className="text-xs font-black uppercase tracking-widest mb-1">Database Connection Alert</p>
-                            <p className="text-xs font-bold opacity-80">{pageError}</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest">Database Error</p>
+                            <p className="text-[10px] font-bold opacity-80">{pageError}</p>
                         </div>
-                        <button onClick={fetchProducts} className="px-5 py-2.5 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform">Retry</button>
+                        <button onClick={fetchProducts} className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">Retry</button>
                     </div>
                 )}
 
@@ -245,6 +285,120 @@ export default function InventoryPage() {
                     />
                 </div>
             </main>
+
+            {/* Filters Popup */}
+            {showFilters && (
+                <div className="fixed inset-0 bg-primary/20 backdrop-blur-md flex items-end sm:items-center justify-center z-[110] p-0 sm:p-4 animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-lg rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl border border-primary/10 overflow-hidden relative flex flex-col p-6 sm:p-8 space-y-6 animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-primary/5 text-primary rounded-xl">
+                                    <Filter size={20} strokeWidth={2.5} />
+                                </div>
+                                <h3 className="text-xl font-black text-primary uppercase italic">Search Filters</h3>
+                            </div>
+                            <button onClick={() => setShowFilters(false)} className="p-2 bg-secondary/50 rounded-xl hover:bg-primary/5 transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-6 overflow-y-auto max-h-[70vh] pr-2 custom-scrollbar">
+                            {/* Category Filter */}
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-2">Category</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        onClick={() => setFilterCategory("all")}
+                                        className={cn(
+                                            "px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
+                                            filterCategory === "all" ? "bg-primary text-white border-primary" : "bg-white text-primary border-primary/10"
+                                        )}
+                                    >
+                                        All Categories
+                                    </button>
+                                    {categories.map(cat => (
+                                        <button
+                                            key={cat.id}
+                                            onClick={() => setFilterCategory(cat.id)}
+                                            className={cn(
+                                                "px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all truncate",
+                                                filterCategory === cat.id ? "bg-primary text-white border-primary" : "bg-white text-primary border-primary/10"
+                                            )}
+                                        >
+                                            {cat.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Price Range Filter */}
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-2">Price Range ($)</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 font-bold">$</span>
+                                        <input
+                                            type="number"
+                                            placeholder="Min"
+                                            value={filterMinPrice}
+                                            onChange={(e) => setFilterMinPrice(e.target.value)}
+                                            className="w-full pl-8 pr-4 py-3 rounded-xl bg-secondary/20 border-none font-bold text-primary text-xs"
+                                        />
+                                    </div>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 font-bold">$</span>
+                                        <input
+                                            type="number"
+                                            placeholder="Max"
+                                            value={filterMaxPrice}
+                                            onChange={(e) => setFilterMaxPrice(e.target.value)}
+                                            className="w-full pl-8 pr-4 py-3 rounded-xl bg-secondary/20 border-none font-bold text-primary text-xs"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Stock Filter */}
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-2">Stock Level</label>
+                                <button
+                                    onClick={() => setFilterOutOfStock(!filterOutOfStock)}
+                                    className={cn(
+                                        "w-full flex items-center justify-between px-5 py-4 rounded-xl border transition-all",
+                                        filterOutOfStock ? "bg-red-50 border-red-200 text-red-600" : "bg-white border-primary/10 text-primary"
+                                    )}
+                                >
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Show Out of Stock Only</span>
+                                    <div className={cn(
+                                        "w-10 h-6 rounded-full relative transition-all",
+                                        filterOutOfStock ? "bg-red-600" : "bg-secondary"
+                                    )}>
+                                        <div className={cn(
+                                            "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
+                                            filterOutOfStock ? "left-5" : "left-1"
+                                        )} />
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-4 border-t border-primary/5">
+                            <button
+                                onClick={resetFilters}
+                                className="flex-1 py-4 rounded-xl bg-secondary/50 text-primary/40 text-[10px] font-black uppercase tracking-widest hover:bg-secondary transition-all"
+                            >
+                                Reset
+                            </button>
+                            <button
+                                onClick={() => setShowFilters(false)}
+                                className="flex-[2] py-4 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]"
+                            >
+                                Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Extracted Product Modal */}
             <ProductModal

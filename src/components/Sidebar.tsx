@@ -72,36 +72,108 @@ export function Sidebar() {
 
     return (
         <>
-            {/* --- MOBILE TOP BAR (Floating & Glassy) --- */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 h-14 glass z-[60] flex items-center justify-between px-4 shadow-lg shadow-black/5">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-primary/20 shadow-lg">
-                        <LayoutDashboard className="w-5 h-5 text-white" />
+            {/* --- MOBILE BOTTOM NAV BAR --- */}
+            <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl border-t border-primary/5 z-[60] flex items-center justify-around px-2 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-safe">
+                <Link href="/pos" className="flex flex-col items-center gap-1 p-2 w-16 group">
+                    <div className={cn(
+                        "p-2 rounded-xl transition-all",
+                        pathname === "/pos" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground group-hover:bg-primary/5 group-hover:text-primary"
+                    )}>
+                        <ShoppingCart size={22} strokeWidth={pathname === "/pos" ? 2 : 1.5} />
                     </div>
-                    <span className="font-bold tracking-tight text-primary">FoxPOS</span>
-                </div>
-                <button
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="p-2 hover:bg-primary/5 rounded-xl transition-colors"
-                >
-                    {isMobileMenuOpen ? <X size={20} strokeWidth={1.5} className="text-primary" /> : <Menu size={20} strokeWidth={1.5} className="text-primary" />}
-                </button>
-            </div>
+                    <span className={cn("text-[9px] font-bold uppercase tracking-widest", pathname === "/pos" ? "text-primary" : "text-muted-foreground")}>POS</span>
+                </Link>
 
-            {/* --- MOBILE BACKDROP --- */}
+                <Link href="/inventory" className="flex flex-col items-center gap-1 p-2 w-16 group">
+                    <div className={cn(
+                        "p-2 rounded-xl transition-all",
+                        pathname === "/inventory" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground group-hover:bg-primary/5 group-hover:text-primary"
+                    )}>
+                        <Package size={22} strokeWidth={pathname === "/inventory" ? 2 : 1.5} />
+                    </div>
+                    <span className={cn("text-[9px] font-bold uppercase tracking-widest", pathname === "/inventory" ? "text-primary" : "text-muted-foreground")}>Stock</span>
+                </Link>
+
+                {/* HOME CENTER BUTTON */}
+                <div className="relative -top-5">
+                    <Link href="/" className="flex items-center justify-center w-16 h-16 bg-primary text-white rounded-full shadow-xl shadow-primary/30 border-4 border-background hover:scale-105 active:scale-95 transition-all">
+                        <LayoutDashboard size={26} strokeWidth={2} />
+                    </Link>
+                </div>
+
+                <Link href="/sales" className="flex flex-col items-center gap-1 p-2 w-16 group">
+                    <div className={cn(
+                        "p-2 rounded-xl transition-all",
+                        pathname === "/sales" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground group-hover:bg-primary/5 group-hover:text-primary"
+                    )}>
+                        <Receipt size={22} strokeWidth={pathname === "/sales" ? 2 : 1.5} />
+                    </div>
+                    <span className={cn("text-[9px] font-bold uppercase tracking-widest", pathname === "/sales" ? "text-primary" : "text-muted-foreground")}>Sales</span>
+                </Link>
+
+                <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="flex flex-col items-center gap-1 p-2 w-16 group">
+                    <div className={cn(
+                        "p-2 rounded-xl transition-all",
+                        isMobileMenuOpen ? "bg-primary/10 text-primary" : "text-muted-foreground group-hover:bg-primary/5 group-hover:text-primary"
+                    )}>
+                        {isMobileMenuOpen ? <X size={22} strokeWidth={2} /> : <Menu size={22} strokeWidth={1.5} />}
+                    </div>
+                    <span className={cn("text-[9px] font-bold uppercase tracking-widest", isMobileMenuOpen ? "text-primary" : "text-muted-foreground")}>Menu</span>
+                </button>
+            </nav>
+
+            {/* --- MOBILE FULL MENU BACKDROP & BOTTOM SHEET --- */}
             {isMobileMenuOpen && (
                 <div
-                    className="lg:hidden fixed inset-0 bg-primary/20 backdrop-blur-sm z-[70] transition-opacity"
+                    className="lg:hidden fixed inset-0 bg-primary/20 backdrop-blur-md z-[65] transition-opacity animate-in fade-in"
                     onClick={() => setIsMobileMenuOpen(false)}
                 />
             )}
+            <div className={cn(
+                "lg:hidden fixed inset-x-0 bottom-24 z-[70] mx-4 bg-white rounded-[2rem] shadow-2xl border border-primary/5 transition-all duration-300 transform",
+                isMobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-[120%] opacity-0 pointer-events-none"
+            )}>
+                <div className="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-black text-primary uppercase tracking-widest text-sm">Main Menu</h3>
+                        <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-secondary/50 rounded-xl">
+                            <X size={16} />
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-4 gap-y-6 gap-x-2">
+                        {sections.map(section => 
+                            section.items.map(item => {
+                                const isActive = pathname === item.href;
+                                return (
+                                    <Link key={item.href} href={item.href} className="flex flex-col items-center gap-2 group">
+                                        <div className={cn(
+                                            "w-12 h-12 rounded-2xl flex items-center justify-center transition-all",
+                                            isActive ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-primary/5 text-primary group-hover:bg-primary/10"
+                                        )}>
+                                            <item.icon size={20} strokeWidth={isActive ? 2 : 1.5} />
+                                        </div>
+                                        <span className={cn(
+                                            "text-[9px] font-bold uppercase tracking-wider text-center truncate w-full",
+                                            isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                                        )}>{item.label}</span>
+                                    </Link>
+                                );
+                            })
+                        )}
+                        <button onClick={logout} className="flex flex-col items-center gap-2 group">
+                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-red-50 text-red-500 transition-all group-hover:bg-red-100">
+                                <LogOut size={20} strokeWidth={1.5} />
+                            </div>
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-center text-red-500 truncate w-full">Sign Out</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-            {/* --- MAIN SIDEBAR --- */}
+            {/* --- MAIN SIDEBAR (DESKTOP) --- */}
             <aside className={cn(
-                "fixed inset-y-0 left-0 z-[80] transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                "lg:translate-x-0 lg:p-4", // On desktop, we give it padding to make it "float"
-                isMobileMenuOpen ? "translate-x-0" : "-translate-x-full",
-                isCollapsed ? "lg:w-24" : "lg:w-72 w-[280px]"
+                "hidden lg:block fixed inset-y-0 left-0 z-[80] transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] lg:p-4",
+                isCollapsed ? "lg:w-24" : "lg:w-72"
             )}>
                 <div className="h-full glass lg:rounded-[2rem] flex flex-col border-none shadow-glass">
 

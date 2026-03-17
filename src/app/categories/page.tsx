@@ -146,7 +146,7 @@ export default function CategoriesPage() {
     );
 
     return (
-        <div className="flex flex-col h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
+        <div className="flex flex-col h-[calc(100vh-8.5rem)] lg:h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
             {/* Header Section */}
             <header className="p-6 lg:p-10 space-y-8 shrink-0">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">

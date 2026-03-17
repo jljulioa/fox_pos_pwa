@@ -66,7 +66,7 @@ export function PosMobileView({
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
     return (
-        <div className="flex flex-col h-[calc(100vh-3.75rem)] bg-white overflow-hidden text-slate-900 mt-[3.75rem]">
+        <div className="flex flex-col h-full bg-white overflow-hidden text-slate-900 pb-20">
             {/* Ticket Management Area */}
             <div className="px-6 pt-6 pb-2 shrink-0 flex items-center gap-3">
                 <div className="flex-1 bg-slate-50 rounded-2xl border border-slate-100 px-4 py-3 flex items-center justify-between overflow-hidden relative group">

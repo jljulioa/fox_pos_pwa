@@ -39,11 +39,11 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
                 isCollapsed ? "lg:ml-[96px]" : "lg:ml-[288px]"
             )}>
                 {isPOSPage ? (
-                    <div className="h-screen w-full overflow-hidden">
+                    <div className="h-screen w-full overflow-hidden pb-28 lg:pb-0">
                         {children}
                     </div>
                 ) : (
-                    <div className="pt-24 pb-8 px-6 lg:pt-8 lg:px-10 max-w-[1920px] mx-auto">
+                    <div className="pt-6 pb-28 px-4 lg:pt-8 lg:pb-8 lg:px-10 max-w-[1920px] mx-auto">
                         {children}
                     </div>
                 )}

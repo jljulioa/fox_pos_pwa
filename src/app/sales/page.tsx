@@ -124,7 +124,7 @@ export default function SalesHistoryPage() {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
+        <div className="flex flex-col h-[calc(100vh-8.5rem)] lg:h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
             {/* Header & Filters Section */}
             <header className="p-4 md:p-6 lg:p-10 space-y-4 md:space-y-8 shrink-0">
                 <div className="flex justify-between items-center">
