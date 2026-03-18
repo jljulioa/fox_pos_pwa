@@ -87,22 +87,16 @@ export default function ReportsPage() {
     }
 
     return (
-        <div className="space-y-8">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Moto Parts Reports</h2>
-                    <p className="text-muted-foreground">Analyze your spare parts sales performance and trends.</p>
-                </div>
-                <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 rounded-xl border bg-card hover:bg-secondary transition-colors text-sm font-medium">
-                        <Calendar size={18} />
-                        Last 7 Days
-                    </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium text-sm shadow-lg shadow-primary/20">
-                        <Download size={18} />
-                        Export Data
-                    </button>
-                </div>
+        <div className="space-y-6">
+            <div className="flex justify-end gap-3 mb-4">
+                <button className="flex items-center gap-2 px-4 py-2 rounded-xl border bg-card hover:bg-secondary transition-colors text-sm font-medium">
+                    <Calendar size={18} />
+                    Last 7 Days
+                </button>
+                <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium text-sm shadow-lg shadow-primary/20">
+                    <Download size={18} />
+                    Export Data
+                </button>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
