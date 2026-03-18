@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { generateInvoicePDF } from "@/lib/pdf";
 import { salesService, FilterType } from "@/services/salesService";
 import { SaleDetailModal } from "./_components/SaleDetailModal";
+import { SalesStats } from "./_components/SalesStats";
 
 const PAGE_SIZE = 10;
 
@@ -32,6 +33,7 @@ export default function SalesHistoryPage() {
     const [page, setPage] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
     const [pageError, setPageError] = useState<string | null>(null);
+    const [stats, setStats] = useState({ totalRevenue: 0, totalUnits: 0 });
 
     // Detail Modal State
     const [selectedSale, setSelectedSale] = useState<any | null>(null);
@@ -48,18 +50,28 @@ export default function SalesHistoryPage() {
         setLoading(true);
         setPageError(null);
         try {
-            const { data, error, count } = await salesService.fetchSales({
-                dateFilter,
-                startDate,
-                endDate,
-                searchTerm,
-                page,
-                pageSize: PAGE_SIZE,
-            });
+            const [salesRes, statsRes] = await Promise.all([
+                salesService.fetchSales({
+                    dateFilter,
+                    startDate,
+                    endDate,
+                    searchTerm,
+                    page,
+                    pageSize: PAGE_SIZE,
+                }),
+                salesService.fetchSalesStats({
+                    dateFilter,
+                    startDate,
+                    endDate,
+                    searchTerm,
+                })
+            ]);
 
-            if (error) throw error;
-            setSales(data || []);
-            setTotalCount(count || 0);
+            if (salesRes.error) throw salesRes.error;
+            
+            setSales(salesRes.data || []);
+            setTotalCount(salesRes.count || 0);
+            setStats(statsRes);
         } catch (err: any) {
             console.error("Error fetching sales:", err);
             setPageError(err.message);
@@ -257,9 +269,13 @@ export default function SalesHistoryPage() {
                     </div>
                 </div>
             </header>
+            <div className="px-4 md:px-6 lg:px-10 py-2 shrink-0">
+                <SalesStats totalRevenue={stats.totalRevenue} totalUnits={stats.totalUnits} />
+            </div>
 
             {/* Main Content Space */}
             <main className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-10 pb-10 custom-scrollbar">
+                
                 {pageError && (
                     <div className="mb-8 p-6 glass-dark rounded-[2.5rem] border-primary/10 flex items-center gap-5">
                         <div className="p-3 bg-red-500/10 text-red-600 rounded-2xl">

@@ -13,7 +13,7 @@ import {
   ArrowDownRight,
   Filter
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { dashboardService } from "@/services/dashboardService";
 import {
   BarChart,
   Bar,
@@ -24,18 +24,11 @@ import {
   ResponsiveContainer,
   Cell
 } from "recharts";
+import { useRouter } from "next/navigation";
 
-const cashFlowData = [
-  { name: "Mon", income: 4000, expense: 2400 },
-  { name: "Tue", income: 3000, expense: 1398 },
-  { name: "Wed", income: 2000, expense: 9800 },
-  { name: "Thu", income: 2780, expense: 3908 },
-  { name: "Fri", income: 1890, expense: 4800 },
-  { name: "Sat", income: 2390, expense: 3800 },
-  { name: "Sun", income: 3490, expense: 4300 },
-];
 
 export default function Home() {
+  const [cashFlowData, setCashFlowData] = useState<any[]>([]);
   const [stats, setStats] = useState([
     { label: "Total Revenue", value: "$0", icon: DollarSign, trend: "+12%", color: "text-primary", bg: "bg-primary/10" },
     { label: "Orders Count", value: "0", icon: ShoppingCart, trend: "+5%", color: "text-accent", bg: "bg-accent/10" },
@@ -45,6 +38,7 @@ export default function Home() {
   const [stockAlerts, setStockAlerts] = useState<any[]>([]);
   const [recentSales, setRecentSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     fetchDashboardData();
@@ -53,36 +47,18 @@ export default function Home() {
   async function fetchDashboardData() {
     setLoading(true);
     try {
-      const { data: salesData, error: salesError } = await supabase
-        .from("sales")
-        .select(`
-          total_amount,
-          date,
-          customers (name)
-        `)
-        .order('date', { ascending: false });
+      const data = await dashboardService.fetchDashboardData();
+      
+      setStats([
+        { label: "Total Revenue", value: `$${data.totalRevenue.toLocaleString()}`, icon: DollarSign, trend: "+12.5%", color: "text-primary", bg: "bg-primary/10" },
+        { label: "Orders Count", value: data.orderCount.toString(), icon: ShoppingCart, trend: "+4.2%", color: "text-accent", bg: "bg-accent/10" },
+        { label: "Total Products", value: data.productCount.toString(), icon: Package, trend: "Inventory", color: "text-emerald-700", bg: "bg-emerald-100" },
+        { label: "Avg. Ticket", value: `$${data.avgTicket.toFixed(0)}`, icon: TrendingUp, trend: "+2.1%", color: "text-teal-600", bg: "bg-teal-100" },
+      ]);
 
-      const { data: productsData, error: productsError } = await supabase
-        .from("products")
-        .select("id, name, stock, min_stock");
-
-      if (salesData && productsData) {
-        const totalRevenueSum = salesData.reduce((acc, sale) => acc + Number(sale.total_amount), 0);
-        const orderCount = salesData.length;
-        const productCount = productsData.length;
-        const avgTicket = orderCount > 0 ? totalRevenueSum / orderCount : 0;
-
-        setStats([
-          { label: "Total Revenue", value: `$${totalRevenueSum.toLocaleString()}`, icon: DollarSign, trend: "+12.5%", color: "text-primary", bg: "bg-primary/10" },
-          { label: "Orders Count", value: orderCount.toString(), icon: ShoppingCart, trend: "+4.2%", color: "text-accent", bg: "bg-accent/10" },
-          { label: "Total Products", value: productCount.toString(), icon: Package, trend: "Inventory", color: "text-emerald-700", bg: "bg-emerald-100" },
-          { label: "Avg. Ticket", value: `$${avgTicket.toFixed(0)}`, icon: TrendingUp, trend: "+2.1%", color: "text-teal-600", bg: "bg-teal-100" },
-        ]);
-
-        const alerts = productsData.filter(p => p.stock <= p.min_stock);
-        setStockAlerts(alerts.slice(0, 5));
-        setRecentSales(salesData.slice(0, 5));
-      }
+      setStockAlerts(data.stockAlerts);
+      setRecentSales(data.recentSales);
+      setCashFlowData(data.cashFlowData);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
     } finally {
@@ -246,7 +222,7 @@ export default function Home() {
               <h3 className="text-xl font-black text-primary">Live Transactions</h3>
               <p className="text-sm text-muted-foreground font-medium">Real-time sale stream</p>
             </div>
-            <button className="text-xs font-black text-accent bg-accent/10 px-4 py-2 rounded-xl uppercase tracking-tighter">View All History</button>
+            <button className="text-xs font-black text-accent bg-accent/10 px-4 py-2 rounded-xl uppercase tracking-tighter cursor-pointer" onClick={() => router.push('/sales')}>View All</button>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {recentSales.length > 0 ? (

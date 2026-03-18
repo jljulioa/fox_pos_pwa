@@ -114,5 +114,60 @@ export const salesService = {
     if (updateSaleErr) throw updateSaleErr;
 
     return newTotal;
+  },
+
+  async fetchSalesStats({
+    dateFilter,
+    startDate,
+    endDate,
+    searchTerm,
+  }: {
+    dateFilter: FilterType;
+    startDate: string;
+    endDate: string;
+    searchTerm: string;
+  }) {
+    let salesQuery = supabase
+      .from("sales")
+      .select("id, total_amount")
+      .eq("status", "closed");
+
+    // Apply Filters (Shared logic with fetchSales)
+    const now = new Date();
+    if (dateFilter === 'today') {
+      const startOfDay = new Date(now.setHours(0, 0, 0, 0)).toISOString();
+      salesQuery = salesQuery.gte('date', startOfDay);
+    } else if (dateFilter === '7days') {
+      const sevenDaysAgo = new Date(now.setDate(now.getDate() - 7)).toISOString();
+      salesQuery = salesQuery.gte('date', sevenDaysAgo);
+    } else if (dateFilter === 'month') {
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      salesQuery = salesQuery.gte('date', firstDayOfMonth);
+    } else if (dateFilter === 'custom' && startDate && endDate) {
+      salesQuery = salesQuery.gte('date', startDate).lte('date', endDate);
+    }
+
+    if (searchTerm) {
+      salesQuery = salesQuery.ilike('sale_ref', `%${searchTerm}%`);
+    }
+
+    const { data: sales, error: salesError } = await salesQuery;
+    if (salesError) throw salesError;
+
+    const totalRevenue = sales.reduce((acc, sale) => acc + Number(sale.total_amount), 0);
+    const saleIds = sales.map(s => s.id);
+
+    let totalUnits = 0;
+    if (saleIds.length > 0) {
+      const { data: items, error: itemsError } = await supabase
+        .from("sale_items")
+        .select("quantity")
+        .in("sale_id", saleIds);
+      
+      if (itemsError) throw itemsError;
+      totalUnits = items.reduce((acc, item) => acc + Number(item.quantity), 0);
+    }
+
+    return { totalRevenue, totalUnits };
   }
 };

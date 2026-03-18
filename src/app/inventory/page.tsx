@@ -15,6 +15,7 @@ import { inventoryService } from "@/services/inventoryService";
 import { InventoryDesktopView } from "./_components/InventoryDesktopView";
 import { InventoryMobileView } from "./_components/InventoryMobileView";
 import { ProductModal } from "./_components/ProductModal";
+import { InventoryStats } from "./_components/InventoryStats";
 
 export default function InventoryPage() {
     const [products, setProducts] = useState<any[]>([]);
@@ -254,6 +255,10 @@ export default function InventoryPage() {
                     </button>
                 </div>
             </header>
+            
+            <div className="px-3 md:px-6 lg:px-10 shrink-0">
+                <InventoryStats products={filteredProducts} />
+            </div>
 
             {/* Main Catalog Space */}
             <main className="flex-1 overflow-y-auto px-3 md:px-6 lg:px-10 pb-6 md:pb-10 custom-scrollbar">
