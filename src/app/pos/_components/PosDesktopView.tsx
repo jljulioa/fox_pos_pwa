@@ -1,5 +1,6 @@
 "use client";
 
+import React, { memo } from "react";
 import {
     Search,
     ShoppingCart,
@@ -44,7 +45,115 @@ interface PosDesktopViewProps {
     total: number;
 }
 
-export function PosDesktopView({
+const CartItem = memo(({ item, index, updateItemPrice, updateQuantity, removeFromCart }: any) => {
+    const [localPrice, setLocalPrice] = React.useState(item.price);
+
+    React.useEffect(() => {
+        setLocalPrice(item.price);
+    }, [item.price]);
+
+    const handlePriceSubmit = () => {
+        const parsed = parseFloat(localPrice as string) || 0;
+        if (parsed !== item.price) {
+            updateItemPrice(item.id, parsed);
+        }
+    };
+
+    return (
+        <tr className="group hover:bg-slate-50/50 transition-colors">
+            <td className="px-6 py-4">
+                <span className="text-[11px] font-bold text-slate-400">{String(index + 1).padStart(2, '0')}</span>
+            </td>
+            <td className="px-6 py-4">
+                <div className="flex flex-col">
+                    <span className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{item.name}</span>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">{item.brand || 'SKU-GENERIC'}</span>
+                </div>
+            </td>
+            <td className="px-6 py-4">
+                <div className="flex items-center justify-center gap-1">
+                    <span className="text-[11px] font-bold text-slate-300">$</span>
+                    <input
+                        type="number"
+                        value={localPrice}
+                        onChange={(e) => setLocalPrice(e.target.value)}
+                        onBlur={handlePriceSubmit}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handlePriceSubmit();
+                        }}
+                        className="w-20 bg-transparent border-none text-center font-bold text-slate-700 text-sm outline-none focus:ring-0 p-0"
+                    />
+                </div>
+            </td>
+            <td className="px-6 py-4">
+                <div className="flex items-center justify-center gap-3">
+                    <button
+                        onClick={() => updateQuantity(item.id, -1)}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-all border border-slate-100 shadow-sm"
+                    >
+                        <Minus size={12} strokeWidth={3} />
+                    </button>
+                    <span className="w-6 text-center text-sm font-bold text-slate-900">{item.quantity}</span>
+                    <button
+                        onClick={() => updateQuantity(item.id, 1)}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-all border border-slate-100 shadow-sm"
+                    >
+                        <Plus size={12} strokeWidth={3} />
+                    </button>
+                </div>
+            </td>
+            <td className="px-6 py-4 text-right">
+                <span className="text-sm font-bold text-slate-900">${(item.price * item.quantity).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+            </td>
+            <td className="px-6 py-4 text-center">
+                <button
+                    onClick={() => removeFromCart(item.id)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                >
+                    <Trash2 size={16} strokeWidth={2} />
+                </button>
+            </td>
+        </tr>
+    );
+});
+CartItem.displayName = "CartItem";
+
+const ProductCard = memo(({ product, addToCart }: any) => (
+    <div
+        className="group bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-primary/20 transition-all flex items-center gap-4 relative"
+    >
+        <div className="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden">
+            <Package className="text-slate-300" size={24} strokeWidth={1.5} />
+        </div>
+
+        <div className="flex-1 min-w-0">
+            <div className="flex flex-col">
+                <h4 className="text-sm font-bold text-slate-900 truncate tracking-tight">{product.name}</h4>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{product.brand || 'Parts Dept'}</p>
+            </div>
+            <div className="flex items-center justify-between mt-2">
+                <span className="text-lg font-bold text-primary italic">${product.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                <button
+                    onClick={() => addToCart(product)}
+                    className="px-3 py-1.5 bg-slate-50 hover:bg-primary hover:text-white text-primary text-[10px] font-black uppercase tracking-widest rounded-lg transition-all border border-slate-100 group-hover:border-primary/10"
+                >
+                    Add
+                </button>
+            </div>
+        </div>
+
+        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className={cn(
+                "w-1.5 h-1.5 rounded-full animate-pulse",
+                product.stock > 10 ? "bg-green-500" : "bg-orange-500"
+            )} />
+            <span className="text-[9px] font-bold text-slate-400">{product.stock} left</span>
+        </div>
+    </div>
+));
+ProductCard.displayName = "ProductCard";
+
+export const PosDesktopView = memo(({
     products,
     openSales,
     customers,
@@ -66,7 +175,7 @@ export function PosDesktopView({
     tax,
     discount,
     total
-}: PosDesktopViewProps) {
+}: PosDesktopViewProps) => {
     return (
         <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
             {/* --- CENTRAL MAIN SECTION (The Ticket) --- */}
@@ -162,56 +271,14 @@ export function PosDesktopView({
                                     </tr>
                                 ) : (
                                     cart.map((item, index) => (
-                                        <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <span className="text-[11px] font-bold text-slate-400">{String(index + 1).padStart(2, '0')}</span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{item.name}</span>
-                                                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">{item.brand || 'SKU-GENERIC'}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center justify-center gap-1">
-                                                    <span className="text-[11px] font-bold text-slate-300">$</span>
-                                                    <input
-                                                        type="number"
-                                                        value={item.price}
-                                                        onChange={(e) => updateItemPrice(item.id, parseFloat(e.target.value) || 0)}
-                                                        className="w-20 bg-transparent border-none text-center font-bold text-slate-700 text-sm outline-none focus:ring-0 p-0"
-                                                    />
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center justify-center gap-3">
-                                                    <button
-                                                        onClick={() => updateQuantity(item.id, -1)}
-                                                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-all border border-slate-100 shadow-sm"
-                                                    >
-                                                        <Minus size={12} strokeWidth={3} />
-                                                    </button>
-                                                    <span className="w-6 text-center text-sm font-bold text-slate-900">{item.quantity}</span>
-                                                    <button
-                                                        onClick={() => updateQuantity(item.id, 1)}
-                                                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-all border border-slate-100 shadow-sm"
-                                                    >
-                                                        <Plus size={12} strokeWidth={3} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <span className="text-sm font-bold text-slate-900">${(item.price * item.quantity).toLocaleString()}</span>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <button
-                                                    onClick={() => removeFromCart(item.id)}
-                                                    className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
-                                                >
-                                                    <Trash2 size={16} strokeWidth={2} />
-                                                </button>
-                                            </td>
-                                        </tr>
+                                        <CartItem 
+                                            key={item.id} 
+                                            item={item} 
+                                            index={index} 
+                                            updateItemPrice={updateItemPrice}
+                                            updateQuantity={updateQuantity}
+                                            removeFromCart={removeFromCart}
+                                        />
                                     ))
                                 )}
                             </tbody>
@@ -227,26 +294,26 @@ export function PosDesktopView({
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
                                     <Hash size={12} /> Subtotal
                                 </p>
-                                <p className="text-xl font-bold text-slate-900 italic tracking-tight">${subtotal.toLocaleString()}</p>
+                                <p className="text-xl font-bold text-slate-900 italic tracking-tight">${subtotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
                             </div>
                             <div className="flex-1 min-w-[140px] p-4 bg-slate-50 rounded-2xl border border-slate-100">
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
                                     <Percent size={12} /> Taxes
                                 </p>
-                                <p className="text-xl font-bold text-slate-900 italic tracking-tight">${tax.toLocaleString()}</p>
+                                <p className="text-xl font-bold text-slate-900 italic tracking-tight">${tax.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
                             </div>
                             <div className="flex-1 min-w-[140px] p-4 bg-slate-50 rounded-2xl border border-slate-100">
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
                                     <DollarSign size={12} /> Discounts
                                 </p>
-                                <p className="text-xl font-bold text-slate-900 italic tracking-tight text-red-500">-${discount.toLocaleString()}</p>
+                                <p className="text-xl font-bold text-slate-900 italic tracking-tight text-red-500">-${discount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
                             </div>
                         </div>
 
                         <div className="w-full lg:w-auto flex items-center gap-4 shrink-0">
                             <div className="text-right flex flex-col items-end pr-2">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Payable</span>
-                                <span className="text-4xl font-black text-primary italic tracking-tighter leading-none">${total.toLocaleString()}</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total to Charge</span>
+                                <span className="text-4xl font-black text-primary italic tracking-tighter leading-none">${total.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
                             </div>
                             <button
                                 disabled={cart.length === 0 || !currentSale}
@@ -288,7 +355,7 @@ export function PosDesktopView({
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar" style={{ contentVisibility: 'auto' } as any}>
                     {loading ? (
                         <div className="space-y-4">
                             {[1, 2, 3, 4, 5, 6].map(i => (
@@ -303,38 +370,11 @@ export function PosDesktopView({
                     ) : (
                         <div className="space-y-3">
                             {products.map((product) => (
-                                <div
-                                    key={product.id}
-                                    className="group bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-primary/20 transition-all flex items-center gap-4"
-                                >
-                                    <div className="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden relative">
-                                        <Package className="text-slate-300" size={24} strokeWidth={1.5} />
-                                    </div>
-
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex flex-col">
-                                            <h4 className="text-sm font-bold text-slate-900 truncate tracking-tight">{product.name}</h4>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{product.brand || 'Parts Dept'}</p>
-                                        </div>
-                                        <div className="flex items-center justify-between mt-2">
-                                            <span className="text-lg font-bold text-primary italic">${product.price.toLocaleString()}</span>
-                                            <button
-                                                onClick={() => addToCart(product)}
-                                                className="px-3 py-1.5 bg-slate-50 hover:bg-primary hover:text-white text-primary text-[10px] font-black uppercase tracking-widest rounded-lg transition-all border border-slate-100 group-hover:border-primary/10"
-                                            >
-                                                Add to Cart
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <span className={cn(
-                                            "w-1.5 h-1.5 rounded-full animate-pulse",
-                                            product.stock > 10 ? "bg-green-500" : "bg-orange-500"
-                                        )} />
-                                        <span className="text-[9px] font-bold text-slate-400">{product.stock} left</span>
-                                    </div>
-                                </div>
+                                <ProductCard 
+                                    key={product.id} 
+                                    product={product} 
+                                    addToCart={addToCart} 
+                                />
                             ))}
                         </div>
                     )}
@@ -342,4 +382,6 @@ export function PosDesktopView({
             </aside>
         </div>
     );
-}
+});
+PosDesktopView.displayName = "PosDesktopView";
+

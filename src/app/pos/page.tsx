@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useDeferredValue } from "react";
 import {
     Search,
     ShoppingCart,
@@ -48,20 +48,39 @@ export default function POSPage() {
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm, fetchProducts]);
 
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const tax = cart.reduce((sum, item) => {
-        const rate = item.product_categories?.taxes?.rate || item.tax_rate || 0;
-        return sum + (item.price * item.quantity * (rate / 100));
-    }, 0);
-    const discount = 0; // Placeholder for now
-    const total = subtotal + tax - discount;
+    const total = useMemo(() => 
+        cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+    , [cart]);
+
+    const tax = useMemo(() => 
+        cart.reduce((sum, item) => {
+            const rate = item.tax_rate || 0;
+            const itemTotal = item.price * item.quantity;
+            const netPrice = itemTotal / (1 + rate / 100);
+            return sum + (itemTotal - netPrice);
+        }, 0)
+    , [cart]);
+
+    const discount = useMemo(() => 
+        cart.reduce((sum, item) => {
+            const originalPrice = item.original_price !== undefined && item.original_price !== null ? item.original_price : item.price;
+            const diff = originalPrice - item.price;
+            return sum + ((diff > 0 ? diff : 0) * item.quantity);
+        }, 0)
+    , [cart]);
+
+    const subtotal = total - tax; // Net price base
+    const deferredSearchTerm = useDeferredValue(searchTerm);
 
     return (
         <div className="h-screen overflow-hidden">
+
             {/* Desktop View */}
             <div className="hidden lg:block h-full">
                 <PosDesktopView 
                     {...posProps}
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
                     subtotal={subtotal}
                     tax={tax}
                     discount={discount}

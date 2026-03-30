@@ -69,8 +69,12 @@ export function usePos() {
                     const formattedCart = items.map(item => ({
                         ...item.products,
                         quantity: item.quantity,
+                        price: item.unit_price !== undefined && item.unit_price !== null ? item.unit_price : item.products.price,
+                        original_price: item.products.price,
                         sale_item_id: item.id,
-                        tax_rate: item.products.product_categories?.taxes?.rate || 0
+                        tax_rate: (item.products.taxable && item.products.product_categories?.taxes?.is_active) 
+                            ? (item.products.product_categories?.taxes?.rate || 0) 
+                            : 0
                     })).filter(item => !!item.id);
                     setCart(formattedCart);
                 } else {
@@ -93,12 +97,11 @@ export function usePos() {
         setLoading(false);
     }, []);
 
-
     useEffect(() => {
         fetchInitialData();
     }, [fetchInitialData]);
 
-    const selectSale = async (sale: any) => {
+    const selectSale = useCallback(async (sale: any) => {
         try {
             setError(null);
             setCurrentSale(sale);
@@ -108,8 +111,12 @@ export function usePos() {
                 const formattedCart = items.map(item => ({
                     ...item.products,
                     quantity: item.quantity,
+                    price: item.unit_price !== undefined && item.unit_price !== null ? item.unit_price : item.products.price,
+                    original_price: item.products.price,
                     sale_item_id: item.id,
-                    tax_rate: item.products.product_categories?.taxes?.rate || 0
+                    tax_rate: (item.products.taxable && item.products.product_categories?.taxes?.is_active) 
+                        ? (item.products.product_categories?.taxes?.rate || 0) 
+                        : 0
                 })).filter(item => !!item.id);
                 setCart(formattedCart);
             }
@@ -117,9 +124,9 @@ export function usePos() {
             console.error("Error selecting sale:", err);
             setError("Failed to load ticket items");
         }
-    };
+    }, []);
 
-    const createNewSale = async () => {
+    const createNewSale = useCallback(async () => {
         try {
             setError(null);
             const DEFAULT_CUSTOMER_ID = '22222222-2222-2222-2222-222222222222';
@@ -134,9 +141,9 @@ export function usePos() {
             console.error("Error creating new sale:", err);
             setError("Failed to create new ticket");
         }
-    };
+    }, [selectSale]);
 
-    const updateSaleCustomer = async (customerId: string) => {
+    const updateSaleCustomer = useCallback(async (customerId: string) => {
         if (!currentSale) return;
         try {
             const { error: updateError } = await posService.updateSaleCustomer(currentSale.id, customerId);
@@ -148,51 +155,56 @@ export function usePos() {
             console.error("Error updating customer:", err);
             setError("Failed to update customer");
         }
-    };
+    }, [currentSale, customers, fetchOpenSales]);
 
-    const syncCartWithDB = async (updatedCart: any[], saleId: string) => {
-        const subtotal = updatedCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const totalTax = updatedCart.reduce((sum, item) => {
-            const rate = item.product_categories?.taxes?.rate || item.tax_rate || 0;
-            return sum + (item.price * item.quantity * (rate / 100));
-        }, 0);
-        const totalAmount = subtotal + totalTax;
-
+    const syncCartWithDB = useCallback(async (updatedCart: any[], saleId: string) => {
+        const totalAmount = updatedCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         await posService.updateSaleTotal(saleId, totalAmount);
         fetchOpenSales();
-    };
+    }, [fetchOpenSales]);
 
-    const addToCart = async (product: any) => {
+    const addToCart = useCallback(async (product: any) => {
         if (!currentSale) {
             setError("Select a ticket first");
             return;
         }
         try {
-            const taxRate = product.product_categories?.taxes?.rate || 0;
+            const taxRate = (product.taxable && product.product_categories?.taxes?.is_active) 
+                ? (product.product_categories?.taxes?.rate || 0) 
+                : 0;
+            
             const existing = cart.find(item => item.id === product.id);
             if (existing) {
                 const newQty = existing.quantity + 1;
+                const totalPrice = product.price * newQty;
+                const netPrice = totalPrice / (1 + taxRate / 100);
+                const taxAmount = totalPrice - netPrice;
+
                 const { error: updateError } = await posService.updateSaleItem(currentSale.id, product.id, {
                     quantity: newQty,
-                    total_price: product.price * newQty,
-                    tax_amount: (product.price * newQty) * (taxRate / 100)
+                    total_price: totalPrice,
+                    tax_amount: taxAmount
                 });
                 if (updateError) throw updateError;
                 const newCart = cart.map(item => item.id === product.id ? { ...item, quantity: newQty } : item);
                 setCart(newCart);
                 syncCartWithDB(newCart, currentSale.id);
             } else {
+                const totalPrice = product.price * 1;
+                const netPrice = totalPrice / (1 + taxRate / 100);
+                const taxAmount = totalPrice - netPrice;
+
                 const { data: newItem, error: insertError } = await posService.insertSaleItem(
                     currentSale.id,
                     product.id,
                     1,
                     product.price,
-                    product.price,
-                    product.price * (taxRate / 100)
+                    totalPrice,
+                    taxAmount
                 );
                 if (insertError) throw insertError;
                 if (newItem) {
-                    const newCart = [...cart, { ...product, quantity: 1, sale_item_id: newItem.id, tax_rate: taxRate }];
+                    const newCart = [...cart, { ...product, quantity: 1, original_price: product.price, sale_item_id: newItem.id, tax_rate: taxRate }];
                     setCart(newCart);
                     syncCartWithDB(newCart, currentSale.id);
                 }
@@ -201,18 +213,22 @@ export function usePos() {
             console.error("Add to cart error:", err);
             setError("Failed to update cart in database");
         }
-    };
+    }, [cart, currentSale, syncCartWithDB]);
 
-    const updateQuantity = async (productId: string, delta: number) => {
+    const updateQuantity = useCallback(async (productId: string, delta: number) => {
         const item = cart.find(i => i.id === productId);
         if (!item || !currentSale) return;
         try {
-            const taxRate = item.product_categories?.taxes?.rate || item.tax_rate || 0;
+            const taxRate = item.tax_rate || 0;
             const newQty = Math.max(1, item.quantity + delta);
+            const totalPrice = item.price * newQty;
+            const netPrice = totalPrice / (1 + taxRate / 100);
+            const taxAmount = totalPrice - netPrice;
+
             const { error: updateError } = await posService.updateSaleItem(currentSale.id, productId, {
                 quantity: newQty,
-                total_price: item.price * newQty,
-                tax_amount: (item.price * newQty) * (taxRate / 100)
+                total_price: totalPrice,
+                tax_amount: taxAmount
             });
             if (updateError) throw updateError;
             const newCart = cart.map(i => i.id === productId ? { ...i, quantity: newQty } : i);
@@ -222,9 +238,9 @@ export function usePos() {
             console.error("Update quantity error:", err);
             setError("Failed to update item quantity");
         }
-    };
+    }, [cart, currentSale, syncCartWithDB]);
 
-    const removeFromCart = async (productId: string) => {
+    const removeFromCart = useCallback(async (productId: string) => {
         if (!currentSale) return;
         try {
             const { error: deleteError } = await posService.deleteSaleItem(currentSale.id, productId);
@@ -236,9 +252,9 @@ export function usePos() {
             console.error("Remove from cart error:", err);
             setError("Failed to remove item from database");
         }
-    };
+    }, [cart, currentSale, syncCartWithDB]);
 
-    const handleCheckout = async () => {
+    const handleCheckout = useCallback(async () => {
         if (cart.length === 0 || !currentSale) return;
         setProcessing(true);
         try {
@@ -257,17 +273,21 @@ export function usePos() {
             setError("Finalizing transaction failed. Check database logs.");
             setProcessing(false);
         }
-    };
+    }, [cart, currentSale, paymentMethod, fetchInitialData]);
 
-    const updateItemPrice = async (productId: string, newPrice: number) => {
+    const updateItemPrice = useCallback(async (productId: string, newPrice: number) => {
         const item = cart.find(i => i.id === productId);
         if (!item || !currentSale) return;
         try {
-            const taxRate = item.product_categories?.taxes?.rate || item.tax_rate || 0;
+            const taxRate = item.tax_rate || 0;
+            const totalPrice = newPrice * item.quantity;
+            const netPrice = totalPrice / (1 + taxRate / 100);
+            const taxAmount = totalPrice - netPrice;
+
             const { error: updateError } = await posService.updateSaleItem(currentSale.id, productId, {
                 unit_price: newPrice,
-                total_price: newPrice * item.quantity,
-                tax_amount: (newPrice * item.quantity) * (taxRate / 100)
+                total_price: totalPrice,
+                tax_amount: taxAmount
             });
             if (updateError) throw updateError;
             const newCart = cart.map(i => i.id === productId ? { ...i, price: newPrice } : i);
@@ -277,7 +297,7 @@ export function usePos() {
             console.error("Update price error:", err);
             setError("Failed to update item price");
         }
-    };
+    }, [cart, currentSale, syncCartWithDB]);
 
     return {
         products,
@@ -306,3 +326,4 @@ export function usePos() {
         fetchInitialData
     };
 }
+
