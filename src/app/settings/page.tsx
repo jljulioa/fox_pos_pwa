@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText, ChevronRight, Settings, Users, Store } from "lucide-react";
+import { FileText, ChevronRight, Settings, Users, Store, UploadCloud } from "lucide-react";
 
 export default function SettingsMenuPage() {
   const menuItems = [
@@ -8,6 +8,12 @@ export default function SettingsMenuPage() {
       description: "Configure your invoice templates, business information, address, and VAT/NIT details.",
       icon: <FileText className="w-6 h-6 text-primary" />,
       href: "/settings/invoice"
+    },
+    {
+      title: "Data Import",
+      description: "Bulk import your inventory and products from a CSV file.",
+      icon: <UploadCloud className="w-6 h-6 text-primary" />,
+      href: "/settings/import"
     },
     // Leaving room for more settings items later if the user requests them
   ];
