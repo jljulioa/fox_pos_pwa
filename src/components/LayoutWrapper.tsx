@@ -24,7 +24,7 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
         );
     }
 
-    const isPOSPage = pathname === "/pos";
+    const isPOSPage = pathname === "/pos" || pathname === "/posv2";
 
     if (isLoginPage) {
         return <>{children}</>;

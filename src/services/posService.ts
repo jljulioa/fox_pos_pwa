@@ -4,7 +4,7 @@ export const posService = {
   async fetchProducts(query: string = "") {
     let supabaseQuery = supabase
       .from("products")
-      .select("*, product_categories(id, name, taxes(id, name, rate))")
+      .select("*, product_categories(id, name, taxes(id, name, rate, is_active))")
       .gt("stock", 0)
       .order("name");
 

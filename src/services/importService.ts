@@ -61,10 +61,10 @@ export const importService = {
       throw new Error("No valid records found to import.");
     }
 
-    // 3. Insert into Supabase
+    // 3. Upsert into Supabase (Update if SKU exists, otherwise Insert)
     const { data, error } = await supabase
       .from("products")
-      .insert(toInsert);
+      .upsert(toInsert, { onConflict: 'sku' });
 
     if (error) {
       console.error("Import error:", error);

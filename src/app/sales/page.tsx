@@ -137,61 +137,66 @@ export default function SalesHistoryPage() {
 
     return (
         <div className="flex flex-col h-[calc(100vh-8.5rem)] lg:h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
-            {/* Header & Filters Section */}
-            <header className="p-4 md:p-6 lg:p-10 space-y-4 md:space-y-8 shrink-0">
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20 shrink-0">
-                            <Receipt size={20} className="md:w-6 md:h-6" strokeWidth={1.5} />
+            {/* Header Section */}
+            <header className="p-4 lg:p-10 space-y-6 lg:space-y-8 shrink-0">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 lg:gap-6 relative">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-primary rounded-xl lg:rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                                <Receipt size={20} className="lg:w-6 lg:h-6" strokeWidth={1.5} />
+                            </div>
+                            <h1 className="text-2xl lg:text-4xl font-black tracking-tight text-primary leading-none">Sales History</h1>
                         </div>
-                        <div>
-                            <h1 className="text-xl md:text-3xl lg:text-4xl font-black tracking-tight text-primary leading-none">Sales History</h1>
-                            <p className="text-[9px] md:text-sm text-muted-foreground font-semibold md:flex items-center gap-2 hidden lg:flex">
-                                <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
-                                Revenue Tracking
-                            </p>
-                        </div>
+                        <p className="text-[10px] lg:text-sm text-muted-foreground font-semibold flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 lg:w-2 lg:h-2 bg-accent rounded-full animate-pulse" />
+                            Revenue Tracking
+                        </p>
                     </div>
 
                     {/* Mobile Export - Compact */}
-                    <button className="lg:hidden p-3 bg-secondary text-primary rounded-xl shadow-sm active:scale-95 transition-all">
+                    <button className="lg:hidden absolute right-0 top-0 p-3 bg-secondary text-primary rounded-xl shadow-sm active:scale-95 transition-all">
                         <Download size={18} strokeWidth={2} />
                     </button>
-                    
-                    {/* Desktop Filter Row - Hidden on mobile, moved below */}
-                    <div className="hidden lg:flex bg-white p-1.5 rounded-[2rem] shadow-sm border border-primary/5">
-                        {[
-                            { id: 'all', label: 'All' },
-                            { id: 'today', label: 'Today' },
-                            { id: '7days', label: '7D' },
-                            { id: 'month', label: 'Month' },
-                            { id: 'custom', label: 'Custom' }
-                        ].map((f) => (
-                            <button
-                                key={f.id}
-                                onClick={() => { setDateFilter(f.id as FilterType); setPage(0); }}
-                                className={cn(
-                                    "px-6 py-2.5 text-xs font-black rounded-[1.5rem] transition-all uppercase tracking-wider",
-                                    dateFilter === f.id ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
-                                )}
-                            >
-                                {f.label}
-                            </button>
-                        ))}
+
+                    <div className="hidden lg:flex flex-row items-center gap-4">
+                        <div className="flex bg-white p-1.5 rounded-[2rem] shadow-sm border border-primary/5">
+                            {[
+                                { id: 'all', label: 'All' },
+                                { id: 'today', label: 'Today' },
+                                { id: '7days', label: '7D' },
+                                { id: 'month', label: 'Month' },
+                                { id: 'custom', label: 'Custom' }
+                            ].map((f) => (
+                                <button
+                                    key={f.id}
+                                    onClick={() => { setDateFilter(f.id as FilterType); setPage(0); }}
+                                    className={cn(
+                                        "px-6 py-2.5 text-xs font-black rounded-[1.5rem] transition-all uppercase tracking-wider",
+                                        dateFilter === f.id ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+                                    )}
+                                >
+                                    {f.label}
+                                </button>
+                            ))}
+                        </div>
+                        <button className="flex items-center justify-center gap-2 px-6 py-3.5 bg-secondary text-primary rounded-[1.5rem] font-black text-xs uppercase tracking-widest shadow-sm hover:scale-105 transition-transform active:scale-95">
+                            <Download size={18} strokeWidth={1.5} />
+                            Export CSV
+                        </button>
                     </div>
                 </div>
 
-                <div className="flex flex-col lg:grid lg:grid-cols-12 gap-3 md:gap-6 items-stretch md:items-center">
-                    <div className="relative group lg:col-span-8 lg:col-start-1 lg:row-start-1 flex gap-2">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-6 lg:items-end items-center">
+                    <div className="lg:col-span-6 relative flex gap-2 w-full group lg:mb-6">
                         <div className="relative flex-1">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={16} strokeWidth={1.5} />
+                            <Search className="absolute left-4 lg:left-5 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors lg:w-5 lg:h-5" size={16} strokeWidth={1.5} />
                             <form onSubmit={handleSearch}>
                                 <input
                                     type="text"
                                     placeholder="Search reference..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3 rounded-2xl bg-white shadow-sm border-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold italic text-primary text-xs"
+                                    className="w-full pl-10 lg:pl-14 pr-4 lg:pr-6 py-3 lg:py-4 rounded-2xl lg:rounded-3xl bg-white shadow-sm border-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold italic text-primary text-xs lg:text-base"
                                 />
                             </form>
                         </div>
@@ -208,70 +213,68 @@ export default function SalesHistoryPage() {
                         </button>
                     </div>
 
-                    {/* Date Filters Row - Responsive toggle */}
-                    <div className={cn(
-                        "lg:col-span-12 w-full transition-all duration-300 overflow-hidden",
-                        showMobileFilters ? "max-h-20 opacity-100" : "max-h-0 lg:max-h-0 opacity-0 lg:opacity-0"
-                    )}>
-                        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-primary/5 w-full overflow-x-auto custom-scrollbar-hide mt-2 lg:hidden">
-                            {[
-                                { id: 'all', label: 'All' },
-                                { id: 'today', label: 'Today' },
-                                { id: '7days', label: '7D' },
-                                { id: 'month', label: 'Month' },
-                                { id: 'custom', label: 'Custom' }
-                            ].map((f) => (
-                                <button
-                                    key={f.id}
-                                    onClick={() => { setDateFilter(f.id as FilterType); setPage(0); }}
-                                    className={cn(
-                                        "px-4 py-2 text-[10px] font-black rounded-xl transition-all uppercase tracking-wider flex-1 whitespace-nowrap",
-                                        dateFilter === f.id ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
-                                    )}
-                                >
-                                    {f.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="lg:col-span-12 flex items-center gap-3 w-full overflow-x-auto custom-scrollbar-hide">
-                        {dateFilter === "custom" && (
-                            <div className="flex items-center gap-2 animate-in slide-in-from-left-4 w-full min-w-[280px]">
-                                <div className="relative flex-1">
-                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/40" size={14} strokeWidth={1.5} />
-                                    <input
-                                        type="date"
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                        className="w-full pl-9 pr-2 py-2 bg-white rounded-xl border-none shadow-sm text-[10px] font-bold text-primary outline-none focus:ring-2 focus:ring-primary/20"
-                                    />
-                                </div>
-                                <ArrowRight size={14} className="text-primary/20 shrink-0" />
-                                <div className="relative flex-1">
-                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/40" size={14} strokeWidth={1.5} />
-                                    <input
-                                        type="date"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        className="w-full pl-9 pr-2 py-2 bg-white rounded-xl border-none shadow-sm text-[10px] font-bold text-primary outline-none focus:ring-2 focus:ring-primary/20"
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="hidden lg:flex lg:col-span-4 lg:col-start-9 lg:row-start-1 justify-end gap-3 h-full">
-                        <button className="flex items-center justify-center gap-2 px-6 py-3 w-full max-w-[200px] bg-secondary text-primary rounded-[1.5rem] font-black text-xs uppercase tracking-widest shadow-sm hover:scale-105 transition-transform active:scale-95">
-                            <Download size={18} strokeWidth={1.5} />
-                            Export CSV
-                        </button>
+                    <div className="hidden lg:block lg:col-span-6">
+                        <SalesStats totalRevenue={stats.totalRevenue} totalUnits={stats.totalUnits} />
                     </div>
                 </div>
+
+                {/* Mobile Filters Area */}
+                <div className={cn(
+                    "lg:hidden w-full transition-all duration-300 overflow-hidden",
+                    showMobileFilters ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+                )}>
+                    <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-primary/5 w-full overflow-x-auto custom-scrollbar-hide mt-1">
+                        {[
+                            { id: 'all', label: 'All' },
+                            { id: 'today', label: 'Today' },
+                            { id: '7days', label: '7D' },
+                            { id: 'month', label: 'Month' },
+                            { id: 'custom', label: 'Custom' }
+                        ].map((f) => (
+                            <button
+                                key={f.id}
+                                onClick={() => { setDateFilter(f.id as FilterType); setPage(0); }}
+                                className={cn(
+                                    "px-4 py-2 text-[10px] font-black rounded-xl transition-all uppercase tracking-wider flex-1 whitespace-nowrap",
+                                    dateFilter === f.id ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+                                )}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="w-full flex items-center lg:px-2 gap-3 overflow-x-auto custom-scrollbar-hide">
+                    {dateFilter === "custom" && (
+                        <div className="flex items-center gap-2 animate-in slide-in-from-left-4 w-full min-w-[280px] lg:w-auto lg:min-w-[400px]">
+                            <div className="relative flex-1">
+                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/40" size={14} strokeWidth={1.5} />
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="w-full pl-9 pr-2 py-2 lg:py-3 bg-white rounded-xl lg:rounded-2xl border-none shadow-sm text-[10px] lg:text-xs font-bold text-primary outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                            </div>
+                            <ArrowRight size={14} className="text-primary/20 shrink-0" />
+                            <div className="relative flex-1">
+                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/40" size={14} strokeWidth={1.5} />
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="w-full pl-9 pr-2 py-2 lg:py-3 bg-white rounded-xl lg:rounded-2xl border-none shadow-sm text-[10px] lg:text-xs font-bold text-primary outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="lg:hidden w-full mt-4">
+                    <SalesStats totalRevenue={stats.totalRevenue} totalUnits={stats.totalUnits} />
+                </div>
             </header>
-            <div className="px-4 md:px-6 lg:px-10 py-2 shrink-0">
-                <SalesStats totalRevenue={stats.totalRevenue} totalUnits={stats.totalUnits} />
-            </div>
 
             {/* Main Content Space */}
             <main className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-10 pb-10 custom-scrollbar">
@@ -360,31 +363,36 @@ export default function SalesHistoryPage() {
                 <div className="h-20 lg:h-0" />
             </main>
 
-            {/* Pagination - Fixed on mobile, normal on desktop */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md lg:relative lg:bg-transparent border-t lg:border-none border-primary/5 p-4 lg:p-0 lg:mt-10 z-50">
-                <div className="flex items-center justify-between max-w-7xl mx-auto px-2 lg:px-0">
-                    <p className="text-[8px] md:text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-40 italic hidden sm:block">
-                        {totalCount} entries
-                    </p>
+            {/* Pagination & Stats - Fixed on mobile, normal on desktop */}
+            <div className="fixed bottom-0 left-0 right-0 bg-[#F8F9FA]/90 md:bg-white/80 backdrop-blur-md lg:relative lg:bg-transparent border-t lg:border-none border-primary/5 p-4 lg:p-0 lg:mt-6 z-50 flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto px-2 lg:px-10 w-full gap-4 sm:gap-0">
+                    <div className="hidden lg:block flex-1">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-40 italic">
+                            {totalCount} entries
+                        </p>
+                    </div>
+                    
                     <div className="flex items-center gap-3 w-full sm:w-auto">
                         <button
                             disabled={page === 0 || loading}
                             onClick={() => setPage(page - 1)}
-                            className="p-2 md:p-3 bg-white border border-primary/5 rounded-xl md:rounded-2xl hover:bg-primary hover:text-white transition-all disabled:opacity-20 shadow-sm grow sm:grow-0"
+                            className="p-3 bg-white border border-primary/5 rounded-xl md:rounded-2xl hover:bg-primary hover:text-white transition-all disabled:opacity-20 shadow-sm grow sm:grow-0"
                         >
                             <ChevronLeft size={18} strokeWidth={1.5} />
                         </button>
-                        <div className="flex items-center justify-center px-4 md:px-6 py-2 md:py-3 bg-white border border-primary/5 rounded-xl md:rounded-2xl shadow-sm text-xs font-black text-primary italic shrink-0">
+                        <div className="flex items-center justify-center px-6 py-3 bg-white border border-primary/5 rounded-xl md:rounded-2xl shadow-sm text-xs font-black text-primary italic shrink-0">
                            {page + 1}
                         </div>
                         <button
                             disabled={(page + 1) * PAGE_SIZE >= totalCount || loading}
                             onClick={() => setPage(page + 1)}
-                            className="p-2 md:p-3 bg-white border border-primary/5 rounded-xl md:rounded-2xl hover:bg-primary hover:text-white transition-all disabled:opacity-20 shadow-sm grow sm:grow-0"
+                            className="p-3 bg-white border border-primary/5 rounded-xl md:rounded-2xl hover:bg-primary hover:text-white transition-all disabled:opacity-20 shadow-sm grow sm:grow-0"
                         >
                             <ChevronRight size={18} strokeWidth={1.5} />
                         </button>
                     </div>
+
+                    <div className="hidden lg:block flex-1" />
                 </div>
             </div>
 

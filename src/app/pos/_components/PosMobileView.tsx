@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, memo } from "react";
 import {
     Search,
-    Menu,
     Plus,
     Minus,
     Trash2,
@@ -11,7 +10,6 @@ import {
     X,
     Package,
     Loader2,
-    CheckCircle2,
     DollarSign,
     Printer,
     Edit3,
@@ -42,7 +40,74 @@ interface PosMobileViewProps {
     total: number;
 }
 
-export function PosMobileView({
+const MobileCartItem = memo(({ item, setEditingItemId, updateQuantity, removeFromCart }: any) => (
+    <div className="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm flex items-center gap-4">
+        <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center shrink-0 border border-slate-50 overflow-hidden">
+            <Package className="text-slate-200" size={24} />
+        </div>
+
+        <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-black text-slate-900 truncate leading-tight uppercase italic">{item.name}</h3>
+            <div className="flex items-center gap-2 mt-1">
+                <span 
+                    onClick={() => setEditingItemId(item.id)}
+                    className="text-xs font-bold text-slate-400 cursor-pointer flex items-center gap-1 hover:text-primary"
+                >
+                    ${Number(item.price).toFixed(2)}
+                    <Edit3 size={10} />
+                </span>
+            </div>
+        </div>
+
+        <div className="flex items-center bg-slate-50/80 rounded-xl p-1 shrink-0">
+            <button 
+                onClick={() => updateQuantity(item.id, -1)}
+                className="w-8 h-8 flex items-center justify-center text-slate-400 active:scale-75 transition-transform"
+            >
+                <Minus size={14} />
+            </button>
+            <span className="w-6 text-center text-xs font-black text-slate-900">{item.quantity}</span>
+            <button 
+                onClick={() => updateQuantity(item.id, 1)}
+                className="w-8 h-8 flex items-center justify-center text-slate-400 active:scale-75 transition-transform"
+            >
+                <Plus size={14} />
+            </button>
+        </div>
+
+        <button 
+            onClick={() => removeFromCart(item.id)}
+            className="p-2 text-slate-300 hover:text-red-500 active:scale-95"
+        >
+            <Trash2 size={18} strokeWidth={1.5} />
+        </button>
+    </div>
+));
+MobileCartItem.displayName = "MobileCartItem";
+
+const MobileProductCard = memo(({ product, addToCart }: any) => (
+    <div 
+        className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 active:bg-slate-50 transition-colors"
+        onClick={() => addToCart(product)}
+    >
+        <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center shrink-0">
+            <Package size={20} className="text-slate-300" />
+        </div>
+        <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-black truncate text-primary uppercase italic">{product.name}</h4>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{product.brand || 'Motorcycle Parts'}</span>
+        </div>
+        <div className="text-right flex flex-col items-end">
+            <span className="text-sm font-black text-slate-900 italic">${product.price.toLocaleString()}</span>
+            <button className="mt-1 p-1 bg-primary text-white rounded-lg active:scale-75 transition-transform">
+                <Plus size={16} />
+            </button>
+        </div>
+    </div>
+));
+MobileProductCard.displayName = "MobileProductCard";
+
+export const PosMobileView = memo(({
     products,
     cart,
     searchTerm,
@@ -61,7 +126,7 @@ export function PosMobileView({
     subtotal,
     tax,
     total
-}: PosMobileViewProps) {
+}: PosMobileViewProps) => {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
@@ -88,7 +153,7 @@ export function PosMobileView({
                             ))}
                         </select>
                     </div>
-                    <Menu size={14} className="text-slate-300 absolute right-4 pointer-events-none" />
+                    <X size={14} className="text-slate-300 absolute right-4 pointer-events-none" />
                 </div>
                 
                 <button 
@@ -131,64 +196,31 @@ export function PosMobileView({
                     </div>
                 ) : (
                     cart.map((item) => (
-                        <div key={item.id} className="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm flex items-center gap-4">
-                            {/* Product Image Placeholder */}
-                            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center shrink-0 border border-slate-50 overflow-hidden">
-                                <Package className="text-slate-200" size={24} />
-                            </div>
-
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                                <h3 className="text-sm font-black text-slate-900 truncate leading-tight uppercase italic">{item.name}</h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <span 
-                                        onClick={() => setEditingItemId(item.id)}
-                                        className="text-xs font-bold text-slate-400 cursor-pointer flex items-center gap-1 hover:text-primary"
-                                    >
-                                        ${Number(item.price).toFixed(2)}
-                                        <Edit3 size={10} />
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Controls */}
-                            <div className="flex items-center bg-slate-50/80 rounded-xl p-1 shrink-0">
-                                <button 
-                                    onClick={() => updateQuantity(item.id, -1)}
-                                    className="w-8 h-8 flex items-center justify-center text-slate-400 active:scale-75 transition-transform"
-                                >
-                                    <Minus size={14} />
-                                </button>
-                                <span className="w-6 text-center text-xs font-black text-slate-900">{item.quantity}</span>
-                                <button 
-                                    onClick={() => updateQuantity(item.id, 1)}
-                                    className="w-8 h-8 flex items-center justify-center text-slate-400 active:scale-75 transition-transform"
-                                >
-                                    <Plus size={14} />
-                                </button>
-                            </div>
-
-                            {/* Delete */}
-                            <button 
-                                onClick={() => removeFromCart(item.id)}
-                                className="p-2 text-slate-300 hover:text-red-500 active:scale-95"
-                            >
-                                <Trash2 size={18} strokeWidth={1.5} />
-                            </button>
-                        </div>
+                        <MobileCartItem 
+                            key={item.id} 
+                            item={item} 
+                            setEditingItemId={setEditingItemId}
+                            updateQuantity={updateQuantity}
+                            removeFromCart={removeFromCart}
+                        />
                     ))
                 )}
             </main>
 
             {/* Footer */}
-            <footer className="px-6 pt-6 pb-8 border-t border-slate-100 space-y-6">
-                <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-slate-400">Subtotal</span>
-                    <span className="text-lg font-black text-slate-900 tracking-tight">${subtotal.toLocaleString()}</span>
+            <footer className="px-6 pt-6 pb-8 border-t border-slate-100 space-y-4">
+                <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Subtotal</span>
+                        <span className="text-sm font-black text-slate-900 tracking-tight">${subtotal.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Taxe</span>
+                        <span className="text-sm font-black text-slate-600 tracking-tight">${tax.toLocaleString()}</span>
+                    </div>
                 </div>
 
                 <div className="flex gap-3">
-                    {/* Print Button (Mobile) */}
                     <button
                         disabled={cart.length === 0 || !currentSale}
                         onClick={() => generateInvoicePDF(currentSale, cart, subtotal, tax, total)}
@@ -202,7 +234,7 @@ export function PosMobileView({
                         onClick={handleCheckout}
                         className="flex-1 h-[72px] bg-primary text-white rounded-[2rem] font-black text-lg shadow-xl shadow-primary/20 flex items-center justify-between px-8 active:scale-[0.98] transition-all disabled:opacity-50"
                     >
-                        <span>{processing ? "Procesando..." : "Pagar"}</span>
+                        <span>{processing ? "Cargando..." : "Pagar"}</span>
                         <div className="flex items-center gap-2">
                             <span className="opacity-40 font-medium">|</span>
                             <span>${total.toLocaleString()}</span>
@@ -231,7 +263,7 @@ export function PosMobileView({
                         </div>
                     </header>
 
-                    <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                    <div className="flex-1 overflow-y-auto p-6 space-y-3" style={{ contentVisibility: 'auto' } as any}>
                         {loading ? (
                             <div className="flex flex-col items-center justify-center h-full opacity-20">
                                 <Loader2 className="animate-spin mb-2" size={32} />
@@ -244,28 +276,11 @@ export function PosMobileView({
                             </div>
                         ) : (
                             products.map((product) => (
-                                <div 
-                                    key={product.id}
-                                    className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 active:bg-slate-50 transition-colors"
-                                    onClick={() => {
-                                        addToCart(product);
-                                        // Optional: close search on add? No, let user add multiple
-                                    }}
-                                >
-                                    <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center shrink-0">
-                                        <Package size={20} className="text-slate-300" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="text-sm font-black truncate text-primary uppercase italic">{product.name}</h4>
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{product.brand || 'Motorcycle Parts'}</span>
-                                    </div>
-                                    <div className="text-right flex flex-col items-end">
-                                        <span className="text-sm font-black text-slate-900 italic">${product.price.toLocaleString()}</span>
-                                        <button className="mt-1 p-1 bg-primary text-white rounded-lg active:scale-75 transition-transform">
-                                            <Plus size={16} />
-                                        </button>
-                                    </div>
-                                </div>
+                                <MobileProductCard 
+                                    key={product.id} 
+                                    product={product} 
+                                    addToCart={addToCart} 
+                                />
                             ))
                         )}
                     </div>
@@ -334,4 +349,6 @@ export function PosMobileView({
             )}
         </div>
     );
-}
+});
+PosMobileView.displayName = "PosMobileView";
+
