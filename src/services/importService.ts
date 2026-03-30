@@ -1,51 +1,57 @@
 import { supabase } from "@/lib/supabase";
 import { inventoryService } from "./inventoryService";
 
-export interface ImportRecord {
-  Codigo: string;
-  Descripcion: string;
-  "Precio Costo": string;
-  "Precio Venta": string;
-  "Precio Mayoreo": string;
-  Inventario: string;
-  "Inv. Minim": string;
-  Departamento: string;
+export interface ColumnMapping {
+  sku: string;
+  name: string;
+  cost: string;
+  price: string;
+  stock: string;
+  min_stock: string;
+  category_id?: string;
+  brand?: string;
+  category_name?: string; // For backward compatibility or alternative mapping
 }
 
 export const importService = {
-  async processImport(records: ImportRecord[]) {
-    // 1. Fetch available categories to map 'Departamento'
-    const { data: categories } = await inventoryService.fetchCategories();
-    const categoryMap = new Map<string, string>();
-    if (categories) {
-      categories.forEach((cat: any) => {
-        categoryMap.set(cat.name.trim().toLowerCase(), cat.id);
-      });
+  async processImport(records: any[], mapping: ColumnMapping) {
+    // 1. Fetch available categories if we have category_name mapping instead of direct ID
+    let categoryMap = new Map<string, string>();
+    if (mapping.category_name) {
+      const { data: categories } = await inventoryService.fetchCategories();
+      if (categories) {
+        categories.forEach((cat: any) => {
+          categoryMap.set(cat.name.trim().toLowerCase(), cat.id);
+        });
+      }
     }
 
     // 2. Prepare the payload array
     const toInsert = records.map(record => {
-      const deptName = record.Departamento ? record.Departamento.trim().toLowerCase() : "";
-      const categoryId = categoryMap.get(deptName) || null;
-
-      // Clean pricing and stock (removing $ and ,)
-      const parseNumber = (val: string) => {
-        if (!val) return 0;
-        const cleaned = val.toString().replace(/[$,.]/g, "");
-        // If it was formatted as $200,00 it might become 20000. 
-        // We should just use parseFloat after replacing $ and converting , to .
+      // Helper to clean pricing and stock
+      const parseNumber = (val: any) => {
+        if (val === undefined || val === null || val === "") return 0;
         const normalized = val.toString().replace(/\$/g, "").replace(/\./g, "").replace(/,/g, ".");
         return parseFloat(normalized) || 0;
       };
 
+      // Determine Category ID
+      let categoryId = "00000000-0000-0000-0000-000000000000"; // Default (General)
+      if (mapping.category_id && record[mapping.category_id]) {
+        categoryId = record[mapping.category_id];
+      } else if (mapping.category_name && record[mapping.category_name]) {
+        const deptName = record[mapping.category_name].toString().trim().toLowerCase();
+        categoryId = categoryMap.get(deptName) || "00000000-0000-0000-0000-000000000000";
+      }
+
       return {
-        sku: record.Codigo?.toString().trim(),
-        name: record.Descripcion?.trim(),
-        cost: parseNumber(record["Precio Costo"]),
-        price: parseNumber(record["Precio Venta"]),
-        stock: parseInt(record.Inventario?.toString() || "0", 10),
-        min_stock: parseInt(record["Inv. Minim"]?.toString() || "0", 10),
-        brand: "Generic", // Default brand
+        sku: record[mapping.sku]?.toString().trim(),
+        name: record[mapping.name]?.toString().trim(),
+        cost: parseNumber(record[mapping.cost]),
+        price: parseNumber(record[mapping.price]),
+        stock: parseInt(record[mapping.stock]?.toString() || "0", 10),
+        min_stock: parseInt(record[mapping.min_stock]?.toString() || "0", 10),
+        brand: mapping.brand && record[mapping.brand] ? record[mapping.brand].toString() : "Generic",
         category_id: categoryId,
         taxable: true,
       };
@@ -55,11 +61,7 @@ export const importService = {
       throw new Error("No valid records found to import.");
     }
 
-    // 3. Insert or Upsert into Supabase
-    // We'll use insert. If they already exist and SKU is unique, it might fail unless we do an upsert. 
-    // Assuming SKU is unique constraint in DB, we can use upsert on 'sku'.
-    // However, if we don't know the exact unique constraint, standard insert is safer if we want to avoid overwriting or if there is no unique constraint on SKU.
-    // Let's use standard insert for now.
+    // 3. Insert into Supabase
     const { data, error } = await supabase
       .from("products")
       .insert(toInsert);
