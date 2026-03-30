@@ -60,60 +60,16 @@ export const salesService = {
   },
 
   async processReturn(item: any, selectedSale: any, returningQty: number = 1) {
-    const taxPerUnit = item.tax_amount / item.quantity;
-    const returningTax = taxPerUnit * returningQty;
-    const returningTotalWithTax = (item.unit_price * returningQty) + returningTax;
-
-    // 1. Update Sale Item
-    if (item.quantity <= returningQty) {
-      const { error: delErr } = await supabase.from("sale_items").delete().eq("id", item.id);
-      if (delErr) throw delErr;
-    } else {
-      const newQty = item.quantity - returningQty;
-      const newSubtotal = item.unit_price * newQty;
-      const newTax = taxPerUnit * newQty;
-
-      const { error: updErr } = await supabase
-        .from("sale_items")
-        .update({
-          quantity: newQty,
-          total_price: newSubtotal,
-          tax_amount: newTax
-        })
-        .eq("id", item.id);
-      if (updErr) throw updErr;
-    }
-
-    // 2. Increase Product Stock
-    const { data: product } = await supabase.from("products").select("stock").eq("id", item.product_id).single();
-    const newStock = (product?.stock || 0) + returningQty;
-
-    // We use an RPC to bypass the auto-trigger which generates "MANUAL" transactions
-    const { error: stockErr } = await supabase.rpc("set_stock_skip_trigger", { 
-      p_product_id: item.product_id, 
-      p_new_stock: newStock 
+    const { data, error } = await supabase.rpc('process_sale_return', {
+      p_sale_item_id: item.id,
+      p_sale_id: selectedSale.id,
+      p_product_id: item.product_id,
+      p_returning_qty: returningQty,
+      p_sale_ref: selectedSale.sale_ref
     });
-    if (stockErr) throw stockErr;
 
-    // 3. Log Inventory Transaction (Return)
-    const { error: transErr } = await supabase.from("inventory_transactions").insert({
-      product_id: item.product_id,
-      product_name: item.products.name,
-      transaction_type: 'return',
-      quantity_change: returningQty,
-      stock_before: product?.stock || 0,
-      stock_after: newStock,
-      related_document_id: selectedSale.sale_ref,
-      notes: `Customer return from ${selectedSale.sale_ref}`
-    });
-    if (transErr) throw transErr;
-
-    // 4. Update Sale Total (Subtract price + tax)
-    const newTotal = selectedSale.total_amount - returningTotalWithTax;
-    const { error: updateSaleErr } = await supabase.from("sales").update({ total_amount: newTotal }).eq("id", selectedSale.id);
-    if (updateSaleErr) throw updateSaleErr;
-
-    return newTotal;
+    if (error) throw error;
+    return data;
   },
 
   async fetchSalesStats({
@@ -127,47 +83,29 @@ export const salesService = {
     endDate: string;
     searchTerm: string;
   }) {
-    let salesQuery = supabase
-      .from("sales")
-      .select("id, total_amount")
-      .eq("status", "closed");
-
-    // Apply Filters (Shared logic with fetchSales)
+    // Shared Date Filter mapping logic
     const now = new Date();
+    let p_start_date: string | null = null;
+    let p_end_date: string | null = null;
+
     if (dateFilter === 'today') {
-      const startOfDay = new Date(now.setHours(0, 0, 0, 0)).toISOString();
-      salesQuery = salesQuery.gte('date', startOfDay);
+      p_start_date = new Date(now.setHours(0, 0, 0, 0)).toISOString();
     } else if (dateFilter === '7days') {
-      const sevenDaysAgo = new Date(now.setDate(now.getDate() - 7)).toISOString();
-      salesQuery = salesQuery.gte('date', sevenDaysAgo);
+      p_start_date = new Date(now.setDate(now.getDate() - 7)).toISOString();
     } else if (dateFilter === 'month') {
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      salesQuery = salesQuery.gte('date', firstDayOfMonth);
+      p_start_date = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     } else if (dateFilter === 'custom' && startDate && endDate) {
-      salesQuery = salesQuery.gte('date', startDate).lte('date', endDate);
+      p_start_date = startDate;
+      p_end_date = endDate;
     }
 
-    if (searchTerm) {
-      salesQuery = salesQuery.ilike('sale_ref', `%${searchTerm}%`);
-    }
+    const { data, error } = await supabase.rpc('get_sales_stats', {
+      p_start_date,
+      p_end_date,
+      p_search_term: searchTerm || ''
+    });
 
-    const { data: sales, error: salesError } = await salesQuery;
-    if (salesError) throw salesError;
-
-    const totalRevenue = sales.reduce((acc, sale) => acc + Number(sale.total_amount), 0);
-    const saleIds = sales.map(s => s.id);
-
-    let totalUnits = 0;
-    if (saleIds.length > 0) {
-      const { data: items, error: itemsError } = await supabase
-        .from("sale_items")
-        .select("quantity")
-        .in("sale_id", saleIds);
-      
-      if (itemsError) throw itemsError;
-      totalUnits = items.reduce((acc, item) => acc + Number(item.quantity), 0);
-    }
-
-    return { totalRevenue, totalUnits };
+    if (error) throw error;
+    return data; // Returns { totalRevenue, totalUnits }
   }
 };
