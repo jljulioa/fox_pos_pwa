@@ -7,6 +7,7 @@ import {
     Box
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface InventoryMobileViewProps {
     products: any[];
@@ -18,9 +19,9 @@ interface InventoryMobileViewProps {
 export function InventoryMobileView({ products, loading, onEdit, onDelete }: InventoryMobileViewProps) {
     if (loading) {
         return (
-            <div className="space-y-3">
+            <div className="space-y-2">
                 {[1, 2, 3, 4, 5, 6].map(i => (
-                    <div key={i} className="h-20 rounded-[1.5rem] bg-white animate-pulse shadow-sm" />
+                    <div key={i} className="h-16 rounded-[var(--ui-radius-md)] bg-white animate-pulse shadow-sm border border-slate-100" />
                 ))}
             </div>
         );
@@ -36,49 +37,59 @@ export function InventoryMobileView({ products, loading, onEdit, onDelete }: Inv
     }
 
     return (
-        <div className="space-y-2 pb-8">
+        <div className="space-y-2 pb-8 mb-20">
             {products.map((product) => (
                 <div
                     key={product.id}
-                    className="bg-white rounded-[1.2rem] p-3 shadow-sm border border-primary/5 active:scale-[0.98] transition-all"
+                    className="bg-white rounded-[var(--ui-radius-md)] p-3.5 shadow-sm border border-slate-200 active:scale-[0.98] transition-all flex flex-col gap-3"
                 >
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                            <h3 className="text-sm font-black text-primary uppercase italic truncate mb-1">
+                            <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-[10px] font-black text-slate-400 italic">#{product.sku?.slice(-6) || "N/A"}</span>
+                                <span className="px-1.5 py-0.5 bg-slate-50 text-slate-400 text-[8px] font-black uppercase tracking-widest rounded border border-slate-100">
+                                    {product.product_categories?.name || "General"}
+                                </span>
+                            </div>
+                            <h3 className="text-[13px] font-bold text-slate-900 leading-tight italic truncate">
                                 {product.name}
                             </h3>
-                            <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground/60 uppercase">
-                                    <Hash size={12} strokeWidth={1.5} />
-                                    <span>{product.sku}</span>
-                                </div>
-                                <div className={cn(
-                                    "px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border shrink-0",
-                                    product.stock < 10 ? "bg-red-50 text-red-600 border-red-100" : "bg-primary/5 text-primary border-primary/10"
-                                )}>
-                                    {product.stock} Units
-                                </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                            <span className="text-[15px] font-black text-slate-900 italic tracking-tight">
+                                ${Number(product.price).toLocaleString()}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-slate-50 pt-3">
+                        <div className="flex items-center gap-2">
+                            <div className={cn(
+                                "inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest",
+                                parseInt(product.stock) <= (product.min_stock || 5) ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
+                            )}>
+                                {product.stock} in stock
                             </div>
                         </div>
 
-                        <div className="flex flex-col items-end gap-2 shrink-0">
-                            <span className="text-base font-black text-accent italic leading-none">
-                                ${Number(product.price).toFixed(2)}
-                            </span>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => onEdit(product)}
-                                    className="p-2 bg-secondary/50 text-primary rounded-xl"
-                                >
-                                    <Edit3 size={14} strokeWidth={1.5} />
-                                </button>
-                                <button
-                                    onClick={() => onDelete(product.id, product.name)}
-                                    className="p-2 bg-red-50 text-red-500 rounded-xl"
-                                >
-                                    <Trash2 size={14} strokeWidth={1.5} />
-                                </button>
-                            </div>
+                        <div className="flex gap-1.5">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onEdit(product)}
+                                className="h-8 w-8 bg-slate-50 text-slate-400 rounded-[var(--ui-radius-sm)] border border-slate-100 shadow-none"
+                            >
+                                <Edit3 size={14} strokeWidth={2.5} />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onDelete(product.id, product.name)}
+                                className="h-8 w-8 bg-slate-50 text-slate-400 rounded-[var(--ui-radius-sm)] border border-slate-100 shadow-none hover:text-red-500 hover:bg-white transition-colors"
+                            >
+                                <Trash2 size={14} strokeWidth={2.5} />
+                            </Button>
                         </div>
                     </div>
                 </div>

@@ -31,19 +31,19 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <div className="flex min-h-screen bg-background">
+        <div className="flex min-h-screen bg-slate-200">
             <Sidebar />
 
             <main className={cn(
                 "flex-1 w-full transition-all duration-[0.8s] ease-[cubic-bezier(0.4,0,0.2,1)]",
-                isCollapsed ? "lg:ml-[96px]" : "lg:ml-[288px]"
+                isCollapsed ? "lg:ml-[80px]" : "lg:ml-[256px]"
             )}>
                 {isPOSPage ? (
                     <div className="h-screen w-full overflow-hidden pb-28 lg:pb-0">
                         {children}
                     </div>
                 ) : (
-                    <div className="pt-6 pb-28 px-4 lg:pt-8 lg:pb-8 lg:px-10 max-w-[1920px] mx-auto">
+                    <div className="pt-6 pb-28 px-4 lg:pt-8 lg:pb-4 lg:px-10 max-w-[1920px] mx-auto">
                         {children}
                     </div>
                 )}

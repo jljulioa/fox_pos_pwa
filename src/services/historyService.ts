@@ -8,6 +8,7 @@ export const historyService = {
     startDate,
     endDate,
     searchTerm,
+    transactionType,
     page,
     pageSize,
   }: {
@@ -15,6 +16,7 @@ export const historyService = {
     startDate: string;
     endDate: string;
     searchTerm: string;
+    transactionType?: string;
     page: number;
     pageSize: number;
   }) {
@@ -26,16 +28,21 @@ export const historyService = {
     // Date Filtering Logic
     const now = new Date();
     if (dateFilter === "today") {
-      const startOfDay = new Date(now.setHours(0, 0, 0, 0)).toISOString();
+      const startOfDay = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
       query = query.gte("transaction_date", startOfDay);
     } else if (dateFilter === "7days") {
-      const sevenDaysAgo = new Date(now.setDate(now.getDate() - 7)).toISOString();
+      const sevenDaysAgo = new Date(new Date().setDate(new Date().getDate() - 7)).toISOString();
       query = query.gte("transaction_date", sevenDaysAgo);
     } else if (dateFilter === "month") {
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
       query = query.gte("transaction_date", startOfMonth);
     } else if (dateFilter === "custom" && startDate && endDate) {
       query = query.gte("transaction_date", startDate).lte("transaction_date", endDate);
+    }
+
+    // Type Filter
+    if (transactionType && transactionType !== "all") {
+      query = query.eq("transaction_type", transactionType);
     }
 
     // Search
