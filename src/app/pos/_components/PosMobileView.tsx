@@ -1,19 +1,18 @@
 "use client";
 
-import React, { useState, memo } from "react";
+import React, { useState, useRef, memo } from "react";
 import {
     Search,
     Plus,
-    Minus,
-    Trash2,
     ShoppingCart,
     X,
-    Package,
     Loader2,
     DollarSign,
     Printer,
     Edit3,
-    Ticket
+    Ticket,
+    Hash,
+    Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { generateInvoicePDF } from "@/lib/pdf";
@@ -21,7 +20,6 @@ import { generateInvoicePDF } from "@/lib/pdf";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
 
 interface PosMobileViewProps {
     products: any[];
@@ -37,7 +35,7 @@ interface PosMobileViewProps {
     createNewSale: () => void;
     addToCart: (product: any) => void;
     updateQuantity: (id: string, delta: number) => void;
-    updateItemPrice: (id: string, price: number) => void;
+    updateItemPrice: (id: string, price: number) => Promise<{ error: string | null }>;
     removeFromCart: (id: string) => void;
     handleCheckout: () => void;
     subtotal: number;
@@ -45,59 +43,45 @@ interface PosMobileViewProps {
     total: number;
 }
 
-const MobileCartItem = memo(({ item, setEditingItemId, updateQuantity, removeFromCart }: any) => (
-    <Card className="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm flex items-center gap-4">
-        <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center shrink-0 border border-slate-50 overflow-hidden">
-            <Package className="text-slate-200" size={24} />
+const MobileCartItem = memo(({ item, onEdit, removeFromCart }: any) => (
+    <div className="flex items-center gap-2.5 px-1 py-2 border-b border-slate-100 last:border-0 group">
+        {/* Qty badge */}
+        <div className="w-7 h-7 shrink-0 bg-slate-100 rounded-lg flex items-center justify-center text-[11px] font-black text-slate-600 shadow-inner">
+            {item.quantity}
         </div>
 
+        {/* Name + price */}
         <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-black text-slate-900 truncate leading-tight uppercase italic">{item.name}</h3>
-            <div className="flex items-center gap-2 mt-1">
-                <span 
-                    onClick={() => setEditingItemId(item.id)}
-                    className="text-xs font-bold text-slate-400 cursor-pointer flex items-center gap-1 hover:text-primary"
-                >
-                    ${Number(item.price).toFixed(2)}
-                    <Edit3 size={10} />
-                </span>
-            </div>
+            <p className="text-[12px] font-black text-slate-800 truncate uppercase italic leading-tight">{item.name}</p>
+            <p className="text-[10px] font-bold text-slate-400 leading-tight mt-px">${Number(item.price).toLocaleString()} × {item.quantity}</p>
         </div>
 
-        <div className="flex items-center bg-slate-50/80 rounded-xl p-1 shrink-0">
-            <Button 
-                variant="ghost"
-                size="icon"
-                onClick={() => updateQuantity(item.id, -1)}
-                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:bg-slate-200 active:scale-75 transition-transform"
-            >
-                <Minus size={14} />
-            </Button>
-            <span className="w-6 text-center text-xs font-black text-slate-900">{item.quantity}</span>
-            <Button 
-                variant="ghost"
-                size="icon"
-                onClick={() => updateQuantity(item.id, 1)}
-                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:bg-slate-200 active:scale-75 transition-transform"
-            >
-                <Plus size={14} />
-            </Button>
-        </div>
+        {/* Line total */}
+        <span className="text-[13px] font-black italic text-slate-900 shrink-0">
+            ${(item.price * item.quantity).toLocaleString()}
+        </span>
 
-        <Button 
-            variant="ghost"
-            size="icon"
-            onClick={() => removeFromCart(item.id)}
-            className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 active:scale-95 transition-all"
+        {/* Edit */}
+        <button
+            onClick={() => onEdit(item)}
+            className="w-7 h-7 shrink-0 flex items-center justify-center rounded-lg bg-slate-50 text-slate-300 hover:bg-primary/10 hover:text-primary transition-all border border-slate-100"
         >
-            <Trash2 size={18} strokeWidth={1.5} />
-        </Button>
-    </Card>
+            <Edit3 size={12} />
+        </button>
+
+        {/* Remove */}
+        <button
+            onClick={() => removeFromCart(item.id)}
+            className="w-7 h-7 shrink-0 flex items-center justify-center rounded-lg bg-slate-50 text-slate-300 hover:bg-rose-50 hover:text-rose-500 transition-all border border-slate-100"
+        >
+            <Trash2 size={12} />
+        </button>
+    </div>
 ));
 MobileCartItem.displayName = "MobileCartItem";
 
 const MobileProductCard = memo(({ product, addToCart }: any) => (
-    <Card 
+    <div
         className="group flex flex-row !p-0 overflow-hidden bg-white border-slate-200 shadow-sm hover:border-primary/40 active:bg-slate-50 transition-all cursor-pointer h-[4.5rem]"
         onClick={() => addToCart(product)}
     >
@@ -126,7 +110,7 @@ const MobileProductCard = memo(({ product, addToCart }: any) => (
         >
             <Plus size={20} strokeWidth={2.5} />
         </Button>
-    </Card>
+    </div>
 ));
 MobileProductCard.displayName = "MobileProductCard";
 
@@ -151,7 +135,10 @@ export const PosMobileView = memo(({
     total
 }: PosMobileViewProps) => {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const [editingItemId, setEditingItemId] = useState<string | null>(null);
+    const [editingItem, setEditingItem] = useState<{ id: string; price: number; qty: number; name: string; cost: number; ceiling: number } | null>(null);
+    const [popupPriceError, setPopupPriceError] = useState<string | null>(null);
+    const editPriceRef = useRef<HTMLInputElement>(null);
+    const editQtyRef = useRef<HTMLInputElement>(null);
 
     return (
         <div className="flex flex-col h-full bg-white overflow-hidden text-slate-900 pb-20">
@@ -216,7 +203,7 @@ export const PosMobileView = memo(({
             </div>
 
             {/* Cart Items */}
-            <main className="flex-1 overflow-y-auto px-6 py-4 space-y-4 custom-scrollbar">
+            <main className="flex-1 overflow-y-auto px-4 custom-scrollbar">
                 {cart.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center opacity-20 text-center">
                         <div className="p-8 border-2 border-dashed border-slate-200 rounded-[3rem] mb-4">
@@ -225,15 +212,26 @@ export const PosMobileView = memo(({
                         <p className="text-xs font-bold uppercase tracking-widest">Carrito vacío</p>
                     </div>
                 ) : (
-                    cart.map((item) => (
-                        <MobileCartItem 
-                            key={item.id} 
-                            item={item} 
-                            setEditingItemId={setEditingItemId}
-                            updateQuantity={updateQuantity}
-                            removeFromCart={removeFromCart}
-                        />
-                    ))
+                    <div className="bg-white rounded-[var(--ui-radius-xl)] border border-slate-100 shadow-sm px-3 py-1">
+                        {cart.map((item) => (
+                            <MobileCartItem
+                                key={item.id}
+                                item={item}
+                                onEdit={(i: any) => {
+                                    setPopupPriceError(null);
+                                    setEditingItem({
+                                        id: i.id,
+                                        price: i.price,
+                                        qty: i.quantity,
+                                        name: i.name,
+                                        cost: Number(i.cost ?? 0),
+                                        ceiling: Number(i.original_price ?? i.price),
+                                    });
+                                }}
+                                removeFromCart={removeFromCart}
+                            />
+                        ))}
+                    </div>
                 )}
             </main>
 
@@ -245,7 +243,7 @@ export const PosMobileView = memo(({
                         <span className="text-sm font-black text-slate-900 tracking-tight">${subtotal.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">Taxe</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Tax</span>
                         <span className="text-sm font-black text-slate-600 tracking-tight">${tax.toLocaleString()}</span>
                     </div>
                 </div>
@@ -328,53 +326,105 @@ export const PosMobileView = memo(({
                 </div>
             )}
 
-            {/* PRICE EDIT MODAL (Mobile context) */}
-            {editingItemId && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center p-6">
-                    <div className="bg-white w-full max-w-xs rounded-[2.5rem] p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="text-center">
-                            <div className="w-16 h-16 bg-primary/5 text-primary rounded-3xl flex items-center justify-center mx-auto mb-4">
-                                <DollarSign size={32} />
+            {/* PRICE + QTY EDIT POPUP */}
+            {editingItem && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-sm rounded-t-[var(--ui-radius-xl)] sm:rounded-[var(--ui-radius-xl)] p-6 space-y-5 shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-250">
+
+                        {/* Header */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-primary/10 text-primary rounded-[var(--ui-radius-md)] shadow-inner">
+                                    <Edit3 size={16} strokeWidth={2.5} />
+                                </div>
+                                <div>
+                                    <h3 className="text-[13px] font-black uppercase italic text-slate-900 leading-none">Edit Item</h3>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 truncate max-w-[180px]">{editingItem.name}</p>
+                                </div>
                             </div>
-                            <h3 className="text-lg font-black uppercase italic text-primary">Editar Precio</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                {cart.find(i => i.id === editingItemId)?.name}
-                            </p>
+                            <button onClick={() => setEditingItem(null)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all border border-slate-100">
+                                <X size={15} />
+                            </button>
                         </div>
 
-                        <div className="relative">
-                            <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-300 z-10">$</span>
-                            <Input 
-                                autoFocus
-                                type="number"
-                                defaultValue={cart.find(i => i.id === editingItemId)?.price}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        updateItemPrice(editingItemId, parseFloat((e.target as HTMLInputElement).value) || 0);
-                                        setEditingItemId(null);
-                                    }
-                                }}
-                                className="w-full pl-12 pr-6 py-6 bg-slate-50 rounded-3xl border-none text-center text-3xl font-black text-primary italic focus-visible:ring-2 focus-visible:ring-primary/20 shadow-none h-16"
-                            />
+                        {/* Fields */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Price */}
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between ml-1 mr-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Unit Price</label>
+                                    <span className="text-[9px] font-bold text-slate-300 italic">
+                                        ${editingItem.cost.toFixed(0)}–${editingItem.ceiling.toFixed(0)}
+                                    </span>
+                                </div>
+                                <div className="relative">
+                                    <DollarSign size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
+                                    <Input
+                                        ref={editPriceRef}
+                                        autoFocus
+                                        type="number"
+                                        defaultValue={editingItem.price}
+                                        onChange={() => setPopupPriceError(null)}
+                                        className={`h-11 pl-8 bg-slate-50 border-slate-200 rounded-[var(--ui-radius-md)] text-[15px] font-black italic text-slate-900 text-right pr-3 ${popupPriceError ? 'border-red-400 ring-2 ring-red-300/50 bg-red-50' : ''}`}
+                                    />
+                                </div>
+                            </div>
+                            {/* Qty */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic ml-1">Quantity</label>
+                                <div className="relative">
+                                    <Hash size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
+                                    <Input
+                                        ref={editQtyRef}
+                                        type="number"
+                                        min={1}
+                                        defaultValue={editingItem.qty}
+                                        className="h-11 pl-8 bg-slate-50 border-slate-200 rounded-[var(--ui-radius-md)] text-[15px] font-black italic text-slate-900 focus:ring-primary/20 text-right pr-3"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
+                        {/* Preview */}
+                        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-[var(--ui-radius-md)] border border-slate-100">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Line Total (est.)</span>
+                            <span className="text-[15px] font-black italic text-primary">
+                                ${((editPriceRef.current ? parseFloat(editPriceRef.current.value) || editingItem.price : editingItem.price) * (editQtyRef.current ? parseInt(editQtyRef.current.value) || editingItem.qty : editingItem.qty)).toLocaleString()}
+                            </span>
+                        </div>
+
+                        {/* Inline price error */}
+                        {popupPriceError && (
+                            <div className="flex items-start gap-2 p-3 bg-red-50 rounded-[var(--ui-radius-md)] border border-red-200 text-red-600 animate-in slide-in-from-top-1">
+                                <span className="text-[10px] font-black uppercase tracking-widest leading-snug">
+                                    ⚠ {popupPriceError.split('.')[0]}.
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Actions */}
                         <div className="flex gap-3">
-                            <Button 
-                                variant="ghost"
-                                onClick={() => setEditingItemId(null)}
-                                className="flex-1 h-14 text-xs font-black uppercase tracking-widest text-slate-400"
-                            >
-                                Cancelar
+                            <Button variant="ghost" onClick={() => { setEditingItem(null); setPopupPriceError(null); }}
+                                className="flex-1 h-11 text-[11px] font-black uppercase tracking-widest text-slate-400 italic">
+                                Cancel
                             </Button>
-                            <Button 
-                                onClick={() => {
-                                    const input = document.querySelector('input[type="number"]') as HTMLInputElement;
-                                    updateItemPrice(editingItemId, parseFloat(input.value) || 0);
-                                    setEditingItemId(null);
+                            <Button
+                                onClick={async () => {
+                                    const newPrice = parseFloat(editPriceRef.current?.value ?? "") || editingItem.price;
+                                    const newQty = parseInt(editQtyRef.current?.value ?? "") || editingItem.qty;
+                                    const result = await updateItemPrice(editingItem.id, newPrice);
+                                    if (result?.error) {
+                                        setPopupPriceError(result.error);
+                                        return; // keep popup open
+                                    }
+                                    // qty sync only if price passed
+                                    const delta = newQty - editingItem.qty;
+                                    if (delta !== 0) updateQuantity(editingItem.id, delta);
+                                    setEditingItem(null);
+                                    setPopupPriceError(null);
                                 }}
-                                className="flex-1 h-14 bg-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl"
-                            >
-                                Guardar
+                                className="flex-[2] h-11 bg-primary text-white rounded-[var(--ui-radius-md)] text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 italic active:scale-[0.98] transition-all">
+                                Save Changes
                             </Button>
                         </div>
                     </div>

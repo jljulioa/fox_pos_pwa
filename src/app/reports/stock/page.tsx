@@ -4,6 +4,21 @@ import { useState, useEffect } from "react";
 import { reportService } from "@/services/reportService";
 import { Loader2, Package, AlertTriangle, Briefcase, Activity } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from "recharts";
+import { cn } from "@/lib/utils";
+
+const PIE_COLORS = ["#6366f1", "#8b5cf6", "#d946ef", "#f43f5e", "#f97316"];
+
+const CustomTooltipStyle = {
+    borderRadius: "12px",
+    border: "1px solid rgba(99,102,241,0.15)",
+    background: "rgba(15,23,42,0.92)",
+    color: "#f1f5f9",
+    boxShadow: "0 20px 40px -12px rgba(0,0,0,0.4)",
+    backdropFilter: "blur(12px)",
+    fontSize: "12px",
+    fontWeight: 700,
+    padding: "10px 16px",
+};
 
 export default function StockReportPage() {
     const [data, setData] = useState<any>(null);
@@ -17,151 +32,120 @@ export default function StockReportPage() {
                 setData(result);
             } catch (error) {
                 console.error("Error fetching stock reports:", error);
-            } finally {
-                setLoading(false);
-            }
+            } finally { setLoading(false); }
         }
         fetchStock();
     }, []);
 
-    if (loading) {
-        return (
-            <div className="h-full flex items-center justify-center min-h-[400px]">
-                <Loader2 className="animate-spin text-primary" size={48} />
+    if (loading) return (
+        <div className="h-full flex items-center justify-center min-h-[300px]">
+            <div className="flex flex-col items-center gap-3 opacity-40">
+                <Loader2 className="animate-spin text-primary" size={32} />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading Stock Intelligence...</span>
             </div>
-        );
-    }
-
+        </div>
+    );
     if (!data) return null;
 
-    const pieColors = ["#4f46e5", "#8b5cf6", "#d946ef", "#f43f5e", "#f97316"];
+    const kpis = [
+        { label: "SKUs in Stock", value: data.totalItems, icon: <Package size={16} strokeWidth={2.5} />, colorClass: "text-primary", bg: "bg-primary/10", border: "border-primary/20" },
+        { label: "Inventory Value", value: `$${data.totalStockValue.toFixed(2)}`, icon: <Briefcase size={16} strokeWidth={2.5} />, colorClass: "text-emerald-600", bg: "bg-emerald-500/10", border: "border-emerald-200/50" },
+        { label: "Retail Potential", value: `$${data.totalRetailValue.toFixed(2)}`, icon: <Activity size={16} strokeWidth={2.5} />, colorClass: "text-blue-600", bg: "bg-blue-500/10", border: "border-blue-200/50" },
+        { label: "Low Stock Alerts", value: data.lowStockCount, icon: <AlertTriangle size={16} strokeWidth={2.5} />, colorClass: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-200/50" },
+    ];
 
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="p-6 bg-card rounded-[2rem] border shadow-sm group hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-3">Total Items in Stock</p>
-                            <h3 className="text-3xl font-black text-primary">{data.totalItems}</h3>
-                        </div>
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-transform group-hover:scale-110">
-                            <Package size={24} />
-                        </div>
-                    </div>
-                </div>
+        <div className="space-y-4">
 
-                <div className="p-6 bg-card rounded-[2rem] border shadow-sm group hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-3">Total Inventory Value</p>
-                            <h3 className="text-3xl font-black text-emerald-600">${data.totalStockValue.toFixed(2)}</h3>
+            {/* ── KPI Grid ── */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {kpis.map(({ label, value, icon, colorClass, bg, border }) => (
+                    <div key={label} className={`glass rounded-[var(--ui-radius-xl)] border ${border} shadow-glass p-5 group hover:shadow-lg transition-shadow`}>
+                        <div className="flex items-start justify-between mb-3">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight max-w-[80px]">{label}</p>
+                            <div className={`p-2 rounded-[var(--ui-radius-md)] ${bg} ${colorClass} group-hover:scale-110 transition-transform shrink-0`}>
+                                {icon}
+                            </div>
                         </div>
-                        <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 transition-transform group-hover:scale-110">
-                            <Briefcase size={24} />
-                        </div>
+                        <h3 className={`text-2xl font-black italic tracking-tighter leading-none ${colorClass}`}>{value}</h3>
                     </div>
-                </div>
-
-                <div className="p-6 bg-card rounded-[2rem] border shadow-sm group hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-3">Retail Potential Value</p>
-                            <h3 className="text-3xl font-black text-blue-600">${data.totalRetailValue.toFixed(2)}</h3>
-                        </div>
-                        <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 transition-transform group-hover:scale-110">
-                            <Activity size={24} />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="p-6 bg-card rounded-[2rem] border shadow-sm group hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-3">Low Stock Alerts</p>
-                            <h3 className="text-3xl font-black text-amber-500">{data.lowStockCount}</h3>
-                        </div>
-                        <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 transition-transform group-hover:scale-110">
-                            <AlertTriangle size={24} />
-                        </div>
-                    </div>
-                </div>
+                ))}
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-3">
-                {/* Category Distribution */}
-                <div className="p-8 bg-card rounded-[2rem] border shadow-sm lg:col-span-1">
-                    <div className="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 className="text-xl font-bold">Category Distribution</h3>
-                            <p className="text-sm font-medium text-muted-foreground mb-1">Top categories by quantity</p>
-                        </div>
+            {/* ── Donut + Low Stock ── */}
+            <div className="grid gap-4 lg:grid-cols-3">
+
+                {/* Pie Chart */}
+                <div className="glass rounded-[var(--ui-radius-xl)] border border-primary/5 shadow-glass overflow-hidden lg:col-span-1">
+                    <div className="px-5 py-4 border-b border-primary/5 bg-primary/[0.02]">
+                        <h3 className="text-[12px] font-black text-slate-800 uppercase italic tracking-tight leading-none">Category Distribution</h3>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Top categories by quantity</p>
                     </div>
-                    {data.categoryDistribution.length > 0 ? (
-                        <div className="h-[300px] w-full">
+                    <div className="p-4 h-[300px]">
+                        {data.categoryDistribution.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
-                                    <Pie
-                                        data={data.categoryDistribution}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={90}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {data.categoryDistribution.map((entry: any, index: number) => (
-                                            <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
+                                    <Pie data={data.categoryDistribution} cx="50%" cy="50%"
+                                        innerRadius={60} outerRadius={88} paddingAngle={4} dataKey="value">
+                                        {data.categoryDistribution.map((_: any, index: number) => (
+                                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <RechartsTooltip 
-                                        contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
+                                    <RechartsTooltip contentStyle={CustomTooltipStyle} />
+                                    <Legend iconType="circle" iconSize={8}
+                                        formatter={(value) => <span style={{ fontSize: "10px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>{value}</span>}
                                     />
-                                    <Legend iconType="circle" />
                                 </PieChart>
                             </ResponsiveContainer>
-                        </div>
-                    ) : (
-                        <div className="text-muted-foreground py-8">No category data</div>
-                    )}
+                        ) : (
+                            <div className="h-full flex items-center justify-center opacity-30">
+                                <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">No category data</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* Top Low Stock Alerts */}
-                <div className="p-8 bg-card rounded-[2rem] border shadow-sm lg:col-span-2 flex flex-col">
-                    <div className="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 className="text-xl font-bold text-amber-600 flex items-center gap-2">
-                                <AlertTriangle size={20} /> Action Required: Low Stock
-                            </h3>
-                            <p className="text-sm font-medium text-muted-foreground mb-1">Products running low on stock</p>
+                {/* Low Stock alerts table */}
+                <div className="glass rounded-[var(--ui-radius-xl)] border border-amber-200/40 shadow-glass overflow-hidden lg:col-span-2">
+                    <div className="px-5 py-4 border-b border-amber-100/60 bg-amber-50/40 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-amber-500/10 rounded-[var(--ui-radius-md)] text-amber-500">
+                                <AlertTriangle size={14} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h3 className="text-[12px] font-black text-slate-800 uppercase italic tracking-tight leading-none">Action Required — Low Stock</h3>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Products running below minimum threshold</p>
+                            </div>
                         </div>
-                        <div className="px-3 py-1 bg-amber-500/10 text-amber-600 rounded-lg text-xs font-bold uppercase tracking-widest">
+                        <span className="px-2 py-1 bg-amber-500/10 text-amber-600 text-[9px] font-black rounded-[var(--ui-radius-md)] uppercase tracking-widest">
                             {data.lowStockCount} Items
-                        </div>
+                        </span>
                     </div>
-                    <div className="overflow-x-auto flex-1 h-[300px] custom-scrollbar">
-                        <table className="w-full text-sm text-left">
-                            <thead className="text-xs text-muted-foreground uppercase sticky top-0 bg-card z-10">
+                    <div className="overflow-y-auto max-h-[260px] custom-scrollbar">
+                        <table className="w-full text-sm text-left border-collapse">
+                            <thead className="border-b border-primary/5 bg-primary/[0.02] sticky top-0 z-10">
                                 <tr>
-                                    <th className="px-6 py-4">Product Name</th>
-                                    <th className="px-6 py-4">Current Stock</th>
-                                    <th className="px-6 py-4">Min Stock Level</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Product</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Stock</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Min</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-primary/5">
                                 {data.topLowStock.map((product: any, idx: number) => (
-                                    <tr key={idx} className="border-b last:border-0 hover:bg-secondary/20 transition-colors">
-                                        <td className="px-6 py-4 font-medium">{product.name}</td>
-                                        <td className="px-6 py-4">
-                                            <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded-md font-bold">{product.stock} units</span>
+                                    <tr key={idx} className="hover:bg-amber-50/30 transition-colors">
+                                        <td className="px-5 py-3 text-[12px] font-bold text-slate-700">{product.name}</td>
+                                        <td className="px-5 py-3 text-center">
+                                            <span className="inline-flex items-center px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-black rounded-[var(--ui-radius-sm)] uppercase tracking-wider">
+                                                {product.stock}
+                                            </span>
                                         </td>
-                                        <td className="px-6 py-4 text-muted-foreground">{product.min_stock} units</td>
+                                        <td className="px-5 py-3 text-center text-[11px] font-bold text-slate-400">{product.min_stock}</td>
                                     </tr>
                                 ))}
                                 {data.topLowStock.length === 0 && (
                                     <tr>
-                                        <td colSpan={3} className="px-6 py-10 text-center text-muted-foreground">
-                                            No low stock items! You're fully stocked.
+                                        <td colSpan={3} className="px-5 py-10 text-center text-[11px] font-black uppercase tracking-widest text-slate-300">
+                                            All stocked up — no low alerts ✓
                                         </td>
                                     </tr>
                                 )}
@@ -170,39 +154,46 @@ export default function StockReportPage() {
                     </div>
                 </div>
             </div>
-            
-             {/* Top Out of Stock Alerts */}
-             <div className="p-8 bg-card rounded-[2rem] border shadow-sm">
-                <div className="flex justify-between items-start mb-6">
+
+            {/* ── Out of Stock — Dark card ── */}
+            <div className="relative overflow-hidden rounded-[var(--ui-radius-xl)] bg-gradient-to-br from-slate-900 via-rose-950/40 to-slate-950 border border-white/10 shadow-2xl shadow-slate-900/30">
+                <div className="absolute -top-20 right-1/3 w-56 h-56 rounded-full bg-rose-500/10 blur-3xl" />
+
+                <div className="relative px-6 py-5 border-b border-white/5 flex items-center justify-between">
                     <div>
-                        <h3 className="text-xl font-bold text-red-600">Out of Stock Inventory</h3>
-                        <p className="text-sm font-medium text-muted-foreground mb-1">Products with exactly zero stock</p>
+                        <h3 className="text-[13px] font-black text-white uppercase italic tracking-tight">Out of Stock Inventory</h3>
+                        <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mt-1">Products with exactly zero stock — lost revenue</p>
                     </div>
-                    <div className="px-3 py-1 bg-red-500/10 text-red-600 rounded-lg text-xs font-bold uppercase tracking-widest">
+                    <span className="px-3 py-1 bg-rose-500/20 text-rose-400 text-[9px] font-black rounded-[var(--ui-radius-md)] uppercase tracking-widest border border-rose-500/20">
                         {data.outOfStockCount} Items
-                    </div>
+                    </span>
                 </div>
-                <div className="overflow-x-auto">
+
+                <div className="relative overflow-x-auto">
                     <table className="w-full text-sm text-left border-collapse">
-                        <thead className="text-xs text-muted-foreground uppercase bg-secondary/30">
+                        <thead className="border-b border-white/5">
                             <tr>
-                                <th className="px-6 py-4 rounded-tl-xl">Product Name</th>
-                                <th className="px-6 py-4">Category</th>
-                                <th className="px-6 py-4 rounded-tr-xl">Loss of Potential Revenue (Per unit)</th>
+                                <th className="px-6 py-3 text-[9px] font-black text-white/30 uppercase tracking-widest">#</th>
+                                <th className="px-6 py-3 text-[9px] font-black text-white/30 uppercase tracking-widest">Product</th>
+                                <th className="px-6 py-3 text-[9px] font-black text-white/30 uppercase tracking-widest">Category</th>
+                                <th className="px-6 py-3 text-[9px] font-black text-white/30 uppercase tracking-widest text-right">Lost Rev / Unit</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-white/5">
                             {data.topOutOfStock.map((product: any, idx: number) => (
-                                <tr key={idx} className="border-b last:border-0 hover:bg-secondary/20 transition-colors">
-                                    <td className="px-6 py-4 font-medium">{product.name}</td>
-                                    <td className="px-6 py-4 text-muted-foreground">{product.product_categories?.name || 'Uncategorized'}</td>
-                                    <td className="px-6 py-4 text-red-600 font-bold">${product.price}</td>
+                                <tr key={idx} className="hover:bg-white/[0.03] transition-colors">
+                                    <td className="px-6 py-3 text-[10px] font-black text-white/20">{String(idx + 1).padStart(2, "0")}</td>
+                                    <td className="px-6 py-3 text-[12px] font-bold text-white/80">{product.name}</td>
+                                    <td className="px-6 py-3 text-[11px] font-semibold text-white/40">{product.product_categories?.name || "Uncategorized"}</td>
+                                    <td className="px-6 py-3 text-right">
+                                        <span className="text-[12px] font-black italic text-rose-400">${product.price}</span>
+                                    </td>
                                 </tr>
                             ))}
                             {data.topOutOfStock.length === 0 && (
                                 <tr>
-                                    <td colSpan={3} className="px-6 py-10 text-center text-muted-foreground">
-                                        No out of stock items found.
+                                    <td colSpan={4} className="px-6 py-10 text-center text-[11px] font-black uppercase tracking-widest text-white/20">
+                                        No out of stock products found
                                     </td>
                                 </tr>
                             )}
@@ -210,7 +201,6 @@ export default function StockReportPage() {
                     </table>
                 </div>
             </div>
-
         </div>
     );
 }

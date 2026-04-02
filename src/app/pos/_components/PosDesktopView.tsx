@@ -43,7 +43,7 @@ interface PosDesktopViewProps {
     updateSaleCustomer: (id: string) => void;
     addToCart: (product: any) => void;
     updateQuantity: (id: string, delta: number) => void;
-    updateItemPrice: (id: string, price: number) => void;
+    updateItemPrice: (id: string, price: number) => Promise<{ error: string | null }>;
     removeFromCart: (id: string) => void;
     handleCheckout: () => void;
     subtotal: number;
@@ -54,15 +54,23 @@ interface PosDesktopViewProps {
 
 const CartItem = memo(({ item, index, updateItemPrice, updateQuantity, removeFromCart }: any) => {
     const [localPrice, setLocalPrice] = React.useState(item.price);
+    const [priceError, setPriceError] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         setLocalPrice(item.price);
+        setPriceError(null);
     }, [item.price]);
 
-    const handlePriceSubmit = () => {
+    const handlePriceSubmit = async () => {
         const parsed = parseFloat(localPrice as string) || 0;
         if (parsed !== item.price) {
-            updateItemPrice(item.id, parsed);
+            const result = await updateItemPrice(item.id, parsed);
+            if (result?.error) {
+                setPriceError(result.error);
+                setLocalPrice(item.price); // revert to last good value
+            } else {
+                setPriceError(null);
+            }
         }
     };
 
@@ -78,18 +86,25 @@ const CartItem = memo(({ item, index, updateItemPrice, updateQuantity, removeFro
                 </div>
             </TableCell>
             <TableCell className="px-6 py-3">
-                <div className="flex items-center justify-center gap-1">
-                    <span className="text-[10px] font-bold text-slate-300">$</span>
-                    <Input
-                        type="number"
-                        value={localPrice}
-                        onChange={(e) => setLocalPrice(e.target.value)}
-                        onBlur={handlePriceSubmit}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') handlePriceSubmit();
-                        }}
-                        className="w-16 bg-transparent border-none text-center font-bold text-slate-700 text-[13px] outline-none focus-visible:ring-0 p-0 shadow-none"
-                    />
+                <div className="flex flex-col items-center gap-1">
+                    <div className={`flex items-center justify-center gap-1 rounded-[var(--ui-radius-sm)] ${priceError ? 'ring-2 ring-red-400/70 bg-red-50' : ''} px-1`}>
+                        <span className="text-[10px] font-bold text-slate-300">$</span>
+                        <Input
+                            type="number"
+                            value={localPrice}
+                            onChange={(e) => { setLocalPrice(e.target.value); setPriceError(null); }}
+                            onBlur={handlePriceSubmit}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handlePriceSubmit();
+                            }}
+                            className="w-16 bg-transparent border-none text-center font-bold text-slate-700 text-[13px] outline-none focus-visible:ring-0 p-0 shadow-none"
+                        />
+                    </div>
+                    {priceError && (
+                        <span className="text-[9px] font-bold text-red-500 leading-tight text-center max-w-[120px]">
+                            {priceError.split('.')[0]}
+                        </span>
+                    )}
                 </div>
             </TableCell>
             <TableCell className="px-6 py-3">
