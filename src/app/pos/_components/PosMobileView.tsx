@@ -18,6 +18,11 @@ import {
 import { cn } from "@/lib/utils";
 import { generateInvoicePDF } from "@/lib/pdf";
 
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
+
 interface PosMobileViewProps {
     products: any[];
     openSales: any[];
@@ -41,7 +46,7 @@ interface PosMobileViewProps {
 }
 
 const MobileCartItem = memo(({ item, setEditingItemId, updateQuantity, removeFromCart }: any) => (
-    <div className="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm flex items-center gap-4">
+    <Card className="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm flex items-center gap-4">
         <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center shrink-0 border border-slate-50 overflow-hidden">
             <Package className="text-slate-200" size={24} />
         </div>
@@ -60,50 +65,68 @@ const MobileCartItem = memo(({ item, setEditingItemId, updateQuantity, removeFro
         </div>
 
         <div className="flex items-center bg-slate-50/80 rounded-xl p-1 shrink-0">
-            <button 
+            <Button 
+                variant="ghost"
+                size="icon"
                 onClick={() => updateQuantity(item.id, -1)}
-                className="w-8 h-8 flex items-center justify-center text-slate-400 active:scale-75 transition-transform"
+                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:bg-slate-200 active:scale-75 transition-transform"
             >
                 <Minus size={14} />
-            </button>
+            </Button>
             <span className="w-6 text-center text-xs font-black text-slate-900">{item.quantity}</span>
-            <button 
+            <Button 
+                variant="ghost"
+                size="icon"
                 onClick={() => updateQuantity(item.id, 1)}
-                className="w-8 h-8 flex items-center justify-center text-slate-400 active:scale-75 transition-transform"
+                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:bg-slate-200 active:scale-75 transition-transform"
             >
                 <Plus size={14} />
-            </button>
+            </Button>
         </div>
 
-        <button 
+        <Button 
+            variant="ghost"
+            size="icon"
             onClick={() => removeFromCart(item.id)}
-            className="p-2 text-slate-300 hover:text-red-500 active:scale-95"
+            className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 active:scale-95 transition-all"
         >
             <Trash2 size={18} strokeWidth={1.5} />
-        </button>
-    </div>
+        </Button>
+    </Card>
 ));
 MobileCartItem.displayName = "MobileCartItem";
 
 const MobileProductCard = memo(({ product, addToCart }: any) => (
-    <div 
-        className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 active:bg-slate-50 transition-colors"
+    <Card 
+        className="group flex flex-row !p-0 overflow-hidden bg-white border-slate-200 shadow-sm hover:border-primary/40 active:bg-slate-50 transition-all cursor-pointer h-[4.5rem]"
         onClick={() => addToCart(product)}
     >
-        <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center shrink-0">
-            <Package size={20} className="text-slate-300" />
+        <div className="flex-1 min-w-0 p-3 flex flex-col justify-center relative">
+            <h4 className="text-sm font-bold text-slate-900 truncate leading-tight tracking-tight pr-6">{product.name}</h4>
+            <div className="flex items-center justify-between mt-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{product.brand || 'Motorcycle Parts'}</span>
+                <span className="text-base font-black text-slate-900 italic leading-none">${product.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+            </div>
+            
+            <div className="absolute top-3.5 right-2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    product.stock > 10 ? "bg-green-500" : "bg-orange-500"
+                )} />
+            </div>
         </div>
-        <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-black truncate text-primary uppercase italic">{product.name}</h4>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{product.brand || 'Motorcycle Parts'}</span>
-        </div>
-        <div className="text-right flex flex-col items-end">
-            <span className="text-sm font-black text-slate-900 italic">${product.price.toLocaleString()}</span>
-            <button className="mt-1 p-1 bg-primary text-white rounded-lg active:scale-75 transition-transform">
-                <Plus size={16} />
-            </button>
-        </div>
-    </div>
+        
+        <Button
+            variant="ghost"
+            onClick={(e) => {
+                e.stopPropagation();
+                addToCart(product);
+            }}
+            className="h-full w-14 rounded-none bg-primary/5 active:bg-primary border-l border-slate-100 text-primary active:text-white transition-colors shadow-none"
+        >
+            <Plus size={20} strokeWidth={2.5} />
+        </Button>
+    </Card>
 ));
 MobileProductCard.displayName = "MobileProductCard";
 
@@ -134,34 +157,41 @@ export const PosMobileView = memo(({
         <div className="flex flex-col h-full bg-white overflow-hidden text-slate-900 pb-20">
             {/* Ticket Management Area */}
             <div className="px-6 pt-6 pb-2 shrink-0 flex items-center gap-3">
-                <div className="flex-1 bg-slate-50 rounded-2xl border border-slate-100 px-4 py-3 flex items-center justify-between overflow-hidden relative group">
-                    <div className="flex items-center gap-2 min-w-0">
-                        <Ticket size={16} className="text-primary shrink-0" />
-                        <select
-                            className="bg-transparent text-sm font-black text-slate-900 outline-none appearance-none cursor-pointer truncate pr-4"
-                            value={currentSale?.id || ""}
-                            onChange={(e) => {
-                                const sale = openSales.find(s => s.id === e.target.value);
-                                if (sale) selectSale(sale);
-                            }}
-                        >
-                            <option value="">Cambiar Ticket</option>
+                <div className="flex-1 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between overflow-hidden relative group">
+                    <Select
+                        value={currentSale?.id ? String(currentSale.id) : "switch"}
+                        onValueChange={(val) => {
+                            if(val === "switch") return;
+                            const sale = openSales.find(s => String(s.id) === val);
+                            if (sale) selectSale(sale);
+                        }}
+                    >
+                        <SelectTrigger className="w-full bg-transparent border-none shadow-none h-[50px] font-black text-slate-900 px-4 focus:ring-0">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <Ticket size={16} className="text-primary shrink-0" />
+                                <SelectValue placeholder="Cambiar Ticket">
+                                    {currentSale ? (openSales.find(s => String(s.id) === String(currentSale.id))?.sale_ref || `ID: ${String(currentSale.id).slice(0, 8)}`) : "Cambiar Ticket"}
+                                </SelectValue>
+                            </div>
+                        </SelectTrigger>
+                        <SelectContent className="max-w-[200px]">
+                            <SelectItem value="switch">Cambiar Ticket</SelectItem>
                             {openSales.map(sale => (
-                                <option key={sale.id} value={sale.id}>
-                                    {sale.sale_ref || `ID: ${sale.id.slice(0, 8)}`}
-                                </option>
+                                <SelectItem key={String(sale.id)} value={String(sale.id)}>
+                                    {sale.sale_ref || `ID: ${String(sale.id).slice(0, 8)}`}
+                                </SelectItem>
                             ))}
-                        </select>
-                    </div>
-                    <X size={14} className="text-slate-300 absolute right-4 pointer-events-none" />
+                        </SelectContent>
+                    </Select>
                 </div>
                 
-                <button 
+                <Button 
+                    size="icon"
                     onClick={() => createNewSale()}
-                    className="p-4 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all shrink-0"
+                    className="w-[50px] h-[50px] bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all shrink-0 border-none"
                 >
                     <Plus size={20} strokeWidth={2.5} />
-                </button>
+                </Button>
             </div>
 
             {/* Sticky Search Trigger */}
@@ -221,15 +251,16 @@ export const PosMobileView = memo(({
                 </div>
 
                 <div className="flex gap-3">
-                    <button
+                    <Button
+                        variant="outline"
                         disabled={cart.length === 0 || !currentSale}
                         onClick={() => generateInvoicePDF(currentSale, cart, subtotal, tax, total)}
-                        className="w-16 h-[72px] bg-slate-100 text-slate-500 rounded-3xl flex items-center justify-center active:scale-95 transition-all disabled:opacity-20"
+                        className="w-16 h-[72px] bg-slate-100 text-slate-500 rounded-3xl flex items-center justify-center active:scale-95 transition-all disabled:opacity-20 border-none shadow-none"
                     >
                         <Printer size={24} />
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
                         disabled={cart.length === 0 || processing || !currentSale}
                         onClick={handleCheckout}
                         className="flex-1 h-[72px] bg-primary text-white rounded-[2rem] font-black text-lg shadow-xl shadow-primary/20 flex items-center justify-between px-8 active:scale-[0.98] transition-all disabled:opacity-50"
@@ -239,7 +270,7 @@ export const PosMobileView = memo(({
                             <span className="opacity-40 font-medium">|</span>
                             <span>${total.toLocaleString()}</span>
                         </div>
-                    </button>
+                    </Button>
                 </div>
             </footer>
 
@@ -247,18 +278,18 @@ export const PosMobileView = memo(({
             {isSearchOpen && (
                 <div className="fixed inset-0 bg-white z-[120] flex flex-col animate-in slide-in-from-bottom duration-300">
                     <header className="px-6 py-4 flex items-center gap-4 border-b border-slate-100">
-                        <button onClick={() => setIsSearchOpen(false)} className="p-2 -ml-2">
+                        <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(false)} className="-ml-2">
                             <X size={24} />
-                        </button>
+                        </Button>
                         <div className="flex-1 relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 z-10" size={18} />
+                            <Input
                                 autoFocus
                                 type="text"
                                 placeholder="Buscar productos..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 bg-slate-50 rounded-2xl border-none focus:ring-0 font-semibold text-sm"
+                                className="w-full pl-12 pr-4 py-3 bg-slate-50 rounded-2xl border-none focus-visible:ring-0 font-semibold text-sm h-[50px] shadow-none"
                             />
                         </div>
                     </header>
@@ -286,12 +317,13 @@ export const PosMobileView = memo(({
                     </div>
 
                     <footer className="p-6 border-t border-slate-100">
-                        <button 
+                        <Button 
+                            variant="secondary"
                             onClick={() => setIsSearchOpen(false)}
-                            className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest"
+                            className="w-full h-14 bg-slate-100 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest shadow-none hover:bg-slate-200"
                         >
                             Volver al Carrito ({cart.length})
-                        </button>
+                        </Button>
                     </footer>
                 </div>
             )}
@@ -311,8 +343,8 @@ export const PosMobileView = memo(({
                         </div>
 
                         <div className="relative">
-                            <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-300">$</span>
-                            <input 
+                            <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-300 z-10">$</span>
+                            <Input 
                                 autoFocus
                                 type="number"
                                 defaultValue={cart.find(i => i.id === editingItemId)?.price}
@@ -322,27 +354,28 @@ export const PosMobileView = memo(({
                                         setEditingItemId(null);
                                     }
                                 }}
-                                className="w-full pl-12 pr-6 py-6 bg-slate-50 rounded-3xl border-none text-center text-3xl font-black text-primary italic focus:ring-2 focus:ring-primary/20"
+                                className="w-full pl-12 pr-6 py-6 bg-slate-50 rounded-3xl border-none text-center text-3xl font-black text-primary italic focus-visible:ring-2 focus-visible:ring-primary/20 shadow-none h-16"
                             />
                         </div>
 
                         <div className="flex gap-3">
-                            <button 
+                            <Button 
+                                variant="ghost"
                                 onClick={() => setEditingItemId(null)}
-                                className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-slate-400"
+                                className="flex-1 h-14 text-xs font-black uppercase tracking-widest text-slate-400"
                             >
                                 Cancelar
-                            </button>
-                            <button 
+                            </Button>
+                            <Button 
                                 onClick={() => {
                                     const input = document.querySelector('input[type="number"]') as HTMLInputElement;
                                     updateItemPrice(editingItemId, parseFloat(input.value) || 0);
                                     setEditingItemId(null);
                                 }}
-                                className="flex-1 py-4 bg-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/20"
+                                className="flex-1 h-14 bg-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl"
                             >
                                 Guardar
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -351,4 +384,3 @@ export const PosMobileView = memo(({
     );
 });
 PosMobileView.displayName = "PosMobileView";
-

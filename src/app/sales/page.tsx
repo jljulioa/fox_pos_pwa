@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     Receipt,
     Search,
@@ -9,9 +9,11 @@ import {
     ChevronRight,
     Eye,
     AlertCircle,
-    Clock,
-    Filter,
-    ArrowRight,
+    ArrowUpRight,
+    LayoutGrid,
+    MoreHorizontal,
+    SlidersHorizontal,
+    X,
     Download,
     User
 } from "lucide-react";
@@ -19,9 +21,25 @@ import { cn } from "@/lib/utils";
 import { generateInvoicePDF } from "@/lib/pdf";
 import { salesService, FilterType } from "@/services/salesService";
 import { SaleDetailModal } from "./_components/SaleDetailModal";
-import { SalesStats } from "./_components/SalesStats";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 
 export default function SalesHistoryPage() {
     const [sales, setSales] = useState<any[]>([]);
@@ -33,14 +51,17 @@ export default function SalesHistoryPage() {
     const [page, setPage] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
     const [pageError, setPageError] = useState<string | null>(null);
-    const [stats, setStats] = useState({ totalRevenue: 0, totalUnits: 0 });
 
     // Detail Modal State
     const [selectedSale, setSelectedSale] = useState<any | null>(null);
     const [saleItems, setSaleItems] = useState<any[]>([]);
     const [loadingItems, setLoadingItems] = useState(false);
     const [processReturn, setProcessReturn] = useState(false);
-    const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+    // Filter Modal State
+    const [showFilters, setShowFilters] = useState(false);
+    const [filterCustomer, setFilterCustomer] = useState<string>("all");
+    const [filterPaymentMethod, setFilterPaymentMethod] = useState<string>("all");
 
     useEffect(() => {
         fetchSales();
@@ -50,7 +71,7 @@ export default function SalesHistoryPage() {
         setLoading(true);
         setPageError(null);
         try {
-            const [salesRes, statsRes] = await Promise.all([
+            const [salesRes] = await Promise.all([
                 salesService.fetchSales({
                     dateFilter,
                     startDate,
@@ -58,20 +79,13 @@ export default function SalesHistoryPage() {
                     searchTerm,
                     page,
                     pageSize: PAGE_SIZE,
-                }),
-                salesService.fetchSalesStats({
-                    dateFilter,
-                    startDate,
-                    endDate,
-                    searchTerm,
                 })
             ]);
 
             if (salesRes.error) throw salesRes.error;
-            
+
             setSales(salesRes.data || []);
             setTotalCount(salesRes.count || 0);
-            setStats(statsRes);
         } catch (err: any) {
             console.error("Error fetching sales:", err);
             setPageError(err.message);
@@ -121,13 +135,13 @@ export default function SalesHistoryPage() {
 
     const handlePrintReceipt = () => {
         if (!selectedSale) return;
-        
+
         const cartForPdf = saleItems.map(item => ({
             name: item.products?.name || "Unknown item",
             quantity: item.quantity,
             price: Number(item.unit_price)
         }));
-        
+
         const subtotal = saleItems.reduce((sum, item) => sum + (Number(item.unit_price) * item.quantity), 0);
         const tax = saleItems.reduce((sum, item) => sum + Number(item.tax_amount || 0), 0);
         const total = Number(selectedSale.total_amount);
@@ -135,268 +149,305 @@ export default function SalesHistoryPage() {
         generateInvoicePDF(selectedSale, cartForPdf, subtotal, tax, total);
     };
 
+    const activeFilterCount = useMemo(() => {
+        let count = 0;
+        if (dateFilter !== 'all' && dateFilter !== 'today') count++;
+        if (filterCustomer !== 'all') count++;
+        if (filterPaymentMethod !== 'all') count++;
+        return count;
+    }, [dateFilter, filterCustomer, filterPaymentMethod]);
+
+    const resetFilters = () => {
+        setDateFilter('today');
+        setFilterCustomer('all');
+        setFilterPaymentMethod('all');
+        setStartDate("");
+        setEndDate("");
+        setPage(0);
+    };
+
     return (
-        <div className="flex flex-col h-[calc(100vh-8.5rem)] lg:h-[calc(100vh-4rem)] lg:-m-4 gap-0 overflow-hidden bg-[#F8F9FA]">
+        <div className="px-3 py-3 flex flex-col h-full gap-6 overflow-hidden bg-white rounded-[var(--sidebar-radius)] shadow-glass">
             {/* Header Section */}
-            <header className="p-4 lg:p-10 space-y-6 lg:space-y-8 shrink-0">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 lg:gap-6 relative">
+            <header className="px-5 py-5 border-b border-primary/5 glass shrink-0 shadow-glass z-20 rounded-[var(--sidebar-radius)] mb-3">
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
                     <div className="space-y-1">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-primary rounded-xl lg:rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                                <Receipt size={20} className="lg:w-6 lg:h-6" strokeWidth={1.5} />
+                            <div className="p-2.5 bg-primary/10 text-primary rounded-[var(--ui-radius-lg)]">
+                                <Receipt size={18} strokeWidth={2.5} />
                             </div>
-                            <h1 className="text-2xl lg:text-4xl font-black tracking-tight text-primary leading-none">Sales History</h1>
+                            <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-none uppercase italic">Sales Management</h1>
                         </div>
-                        <p className="text-[10px] lg:text-sm text-muted-foreground font-semibold flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 lg:w-2 lg:h-2 bg-accent rounded-full animate-pulse" />
-                            Revenue Tracking
-                        </p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Protocol • {totalCount} Records Registered</p>
                     </div>
 
-                    {/* Mobile Export - Compact */}
-                    <button className="lg:hidden absolute right-0 top-0 p-3 bg-secondary text-primary rounded-xl shadow-sm active:scale-95 transition-all">
-                        <Download size={18} strokeWidth={2} />
-                    </button>
-
-                    <div className="hidden lg:flex flex-row items-center gap-4">
-                        <div className="flex bg-white p-1.5 rounded-[2rem] shadow-sm border border-primary/5">
-                            {[
-                                { id: 'all', label: 'All' },
-                                { id: 'today', label: 'Today' },
-                                { id: '7days', label: '7D' },
-                                { id: 'month', label: 'Month' },
-                                { id: 'custom', label: 'Custom' }
-                            ].map((f) => (
-                                <button
-                                    key={f.id}
-                                    onClick={() => { setDateFilter(f.id as FilterType); setPage(0); }}
-                                    className={cn(
-                                        "px-6 py-2.5 text-xs font-black rounded-[1.5rem] transition-all uppercase tracking-wider",
-                                        dateFilter === f.id ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
-                                    )}
-                                >
-                                    {f.label}
-                                </button>
-                            ))}
-                        </div>
-                        <button className="flex items-center justify-center gap-2 px-6 py-3.5 bg-secondary text-primary rounded-[1.5rem] font-black text-xs uppercase tracking-widest shadow-sm hover:scale-105 transition-transform active:scale-95">
-                            <Download size={18} strokeWidth={1.5} />
-                            Export CSV
-                        </button>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-6 lg:items-end items-center">
-                    <div className="lg:col-span-6 relative flex gap-2 w-full group lg:mb-6">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-4 lg:left-5 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors lg:w-5 lg:h-5" size={16} strokeWidth={1.5} />
+                    <div className="flex items-center gap-3 w-full xl:w-auto">
+                        <div className="relative flex-1 md:w-64 group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={14} />
                             <form onSubmit={handleSearch}>
-                                <input
+                                <Input
                                     type="text"
-                                    placeholder="Search reference..."
+                                    placeholder="Search Tickets..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 lg:pl-14 pr-4 lg:pr-6 py-3 lg:py-4 rounded-2xl lg:rounded-3xl bg-white shadow-sm border-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold italic text-primary text-xs lg:text-base"
+                                    className="h-8 pl-9 bg-slate-50 border-slate-200/60 rounded-[var(--ui-radius-md)] text-[11px] font-bold uppercase italic tracking-widest text-slate-600 focus:bg-white transition-all shadow-inner"
                                 />
                             </form>
+                            {searchTerm && (
+                                <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500">
+                                    <X size={12} />
+                                </button>
+                            )}
                         </div>
-                        {/* Mobile Filter Toggle */}
-                        <button 
-                            onClick={() => setShowMobileFilters(!showMobileFilters)}
+
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowFilters(true)}
                             className={cn(
-                                "lg:hidden flex items-center gap-2 px-4 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shrink-0",
-                                showMobileFilters ? "bg-primary text-white" : "bg-white text-primary shadow-sm"
+                                "h-8 px-4 border-slate-200 bg-white rounded-[var(--ui-radius-md)] font-black text-[10px] uppercase tracking-widest italic flex items-center gap-2 transition-all shadow-sm",
+                                activeFilterCount > 0 ? "border-primary/40 text-primary bg-primary/5 ring-1 ring-primary/10 font-bold" : "text-slate-500 hover:bg-slate-50 hover:text-primary"
                             )}
                         >
-                            <Filter size={14} />
-                            <span>Filter</span>
-                        </button>
-                    </div>
+                            <SlidersHorizontal size={12} className={activeFilterCount > 0 ? "animate-pulse" : ""} strokeWidth={2.5} />
+                            {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : "Filters"}
+                        </Button>
 
-                    <div className="hidden lg:block lg:col-span-6">
-                        <SalesStats totalRevenue={stats.totalRevenue} totalUnits={stats.totalUnits} />
-                    </div>
-                </div>
-
-                {/* Mobile Filters Area */}
-                <div className={cn(
-                    "lg:hidden w-full transition-all duration-300 overflow-hidden",
-                    showMobileFilters ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
-                )}>
-                    <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-primary/5 w-full overflow-x-auto custom-scrollbar-hide mt-1">
-                        {[
-                            { id: 'all', label: 'All' },
-                            { id: 'today', label: 'Today' },
-                            { id: '7days', label: '7D' },
-                            { id: 'month', label: 'Month' },
-                            { id: 'custom', label: 'Custom' }
-                        ].map((f) => (
-                            <button
-                                key={f.id}
-                                onClick={() => { setDateFilter(f.id as FilterType); setPage(0); }}
-                                className={cn(
-                                    "px-4 py-2 text-[10px] font-black rounded-xl transition-all uppercase tracking-wider flex-1 whitespace-nowrap",
-                                    dateFilter === f.id ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
-                                )}
-                            >
-                                {f.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="w-full flex items-center lg:px-2 gap-3 overflow-x-auto custom-scrollbar-hide">
-                    {dateFilter === "custom" && (
-                        <div className="flex items-center gap-2 animate-in slide-in-from-left-4 w-full min-w-[280px] lg:w-auto lg:min-w-[400px]">
-                            <div className="relative flex-1">
-                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/40" size={14} strokeWidth={1.5} />
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full pl-9 pr-2 py-2 lg:py-3 bg-white rounded-xl lg:rounded-2xl border-none shadow-sm text-[10px] lg:text-xs font-bold text-primary outline-none focus:ring-2 focus:ring-primary/20"
-                                />
-                            </div>
-                            <ArrowRight size={14} className="text-primary/20 shrink-0" />
-                            <div className="relative flex-1">
-                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/40" size={14} strokeWidth={1.5} />
-                                <input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full pl-9 pr-2 py-2 lg:py-3 bg-white rounded-xl lg:rounded-2xl border-none shadow-sm text-[10px] lg:text-xs font-bold text-primary outline-none focus:ring-2 focus:ring-primary/20"
-                                />
-                            </div>
+                        <div className="flex items-center gap-2 pl-2 border-l border-slate-100">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:bg-slate-50 rounded-[var(--ui-radius-md)] border border-slate-100 shadow-sm" title="Export CSV">
+                                <Download size={14} strokeWidth={2.5} />
+                            </Button>
                         </div>
-                    )}
-                </div>
-
-                <div className="lg:hidden w-full mt-4">
-                    <SalesStats totalRevenue={stats.totalRevenue} totalUnits={stats.totalUnits} />
+                    </div>
                 </div>
             </header>
 
-            {/* Main Content Space */}
-            <main className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-10 pb-10 custom-scrollbar">
-                
-                {pageError && (
-                    <div className="mb-8 p-6 glass-dark rounded-[2.5rem] border-primary/10 flex items-center gap-5">
-                        <div className="p-3 bg-red-500/10 text-red-600 rounded-2xl">
-                            <AlertCircle size={32} strokeWidth={1.5} />
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-sm font-black text-primary uppercase tracking-widest leading-none mb-1">Database Connectivity Error</p>
-                            <p className="text-xs font-semibold text-muted-foreground">{pageError}</p>
-                        </div>
-                        <button onClick={fetchSales} className="px-6 py-3 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform active:scale-95">Retry Sync</button>
-                    </div>
-                )}
+            {/* Error Message */}
+            {pageError && (
+                <div className="p-4 bg-red-50 border border-red-100 rounded-[var(--ui-radius-md)] flex items-center gap-3 text-red-600 shrink-0">
+                    <AlertCircle size={18} strokeWidth={2.5} />
+                    <p className="text-[11px] font-bold uppercase tracking-widest">Connect Error: {pageError}</p>
+                </div>
+            )}
 
-                <div className="space-y-4">
-                    {loading ? (
-                        <div className="grid gap-4">
-                            {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-24 rounded-3xl bg-white animate-pulse" />)}
-                        </div>
-                    ) : sales.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-32 text-center space-y-6 opacity-30">
-                            <div className="p-10 bg-primary/5 rounded-[3rem]">
-                                <Receipt size={80} strokeWidth={1} className="text-primary" />
-                            </div>
-                            <div className="space-y-2">
-                                <h3 className="text-xl font-black text-primary uppercase tracking-widest">No Records Found</h3>
-                                <p className="text-xs font-bold uppercase tracking-widest">The transaction archive is empty for this period</p>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="grid gap-4">
-                            {sales.map((sale) => (
-                                 <div
-                                    key={sale.id}
-                                    className="group flex flex-col md:flex-row items-center justify-between p-4 md:p-6 bg-white rounded-2xl md:rounded-[2rem] shadow-sm hover:shadow-2xl hover:scale-[1.01] transition-all duration-500 border border-transparent hover:border-primary/5 gap-4 md:gap-0"
-                                >
-                                    <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
-                                        <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/5 rounded-xl md:rounded-[1.5rem] flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors shrink-0">
-                                            <Receipt size={20}  strokeWidth={1.5} />
-                                        </div>
-                                        <div className="space-y-0.5 md:space-y-1 min-w-0 flex-1">
-                                            <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-                                                <h3 className="text-base md:text-lg font-black text-primary uppercase italic tracking-tight truncate">{sale.sale_ref || "UNTITLED"}</h3>
-                                                <span className="px-2 py-0.5 bg-secondary text-primary text-[8px] md:text-[9px] font-black rounded-full uppercase tracking-widest">{sale.payment_method}</span>
+            {/* Data Table Wrapper (This scrolls) */}
+            <div className="flex-1 min-h-0 glass lg:rounded-[var(--sidebar-radius)] border border-primary/5 flex flex-col overflow-hidden shadow-glass mb-3">
+                <div className="flex-1 overflow-y-auto custom-scrollbar bg-primary/[0.01]">
+                    <Table className="border-collapse">
+                        <TableHeader className="bg-primary/[0.02] sticky top-0 z-10 border-b border-primary/5">
+                            <TableRow className="hover:bg-transparent border-primary/5">
+                                <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest h-11 w-[80px] pl-6 text-center">Ref</TableHead>
+                                <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest h-11 min-w-[150px]">Date & Time</TableHead>
+                                <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest h-11">Customer</TableHead>
+                                <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest h-11">Payment Mode</TableHead>
+                                <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest h-11 text-right pr-6">Total Amount</TableHead>
+                                <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest h-11 text-center w-[100px]">Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                Array.from({ length: 6 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell colSpan={6} className="h-14">
+                                            <div className="h-4 bg-slate-100 animate-pulse rounded-[var(--ui-radius-sm)] w-full" />
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : sales.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-[400px] text-center border-none">
+                                        <div className="flex flex-col items-center justify-center gap-3 opacity-20">
+                                            <div className="p-4 border-2 border-dashed border-slate-300 rounded-[var(--ui-radius-xl)]">
+                                                <LayoutGrid size={32} />
                                             </div>
-                                            <div className="flex items-center gap-3 md:gap-4 text-[10px] md:text-xs font-bold text-muted-foreground uppercase opacity-60">
-                                                <div className="flex items-center gap-1"><Calendar size={10} /> {new Date(sale.date).toLocaleDateString()}</div>
-                                                <div className="flex items-center gap-1"><Clock size={10} /> {new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                                            </div>
+                                            <p className="text-[10px] font-bold uppercase tracking-widest">No transaction data found for this range</p>
                                         </div>
-                                    </div>
-
-                                    <div className="flex flex-row items-center justify-between md:justify-end gap-3 md:gap-6 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 border-primary/5">
-                                        <div className="flex items-center gap-2 md:gap-3 px-3 md:px-6 py-2 md:py-3 bg-secondary/30 rounded-xl md:rounded-2xl min-w-0">
-                                            <div className="w-7 h-7 md:w-8 md:h-8 bg-white rounded-lg md:rounded-xl shadow-sm flex items-center justify-center text-primary shrink-0">
-                                                <User size={14} strokeWidth={1.5} />
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                sales.map((sale) => (
+                                    <TableRow key={sale.id} className="group border-primary/5 hover:bg-primary/[0.04]">
+                                        <TableCell className="pl-6 text-center">
+                                            <span className="text-[11px] font-black text-slate-400 group-hover:text-primary transition-colors italic">#{String(sale.id).slice(-4).toUpperCase()}</span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span className="text-[13px] font-bold text-slate-900 italic tracking-tight">{new Date(sale.date).toLocaleDateString()}</span>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                             </div>
-                                            <div className="min-w-0">
-                                                <p className="text-[8px] md:text-[9px] font-black text-muted-foreground uppercase leading-none mb-0.5 md:mb-1 tracking-widest">Client</p>
-                                                <p className="text-[10px] md:text-xs font-black text-primary uppercase italic truncate max-w-[80px] md:max-w-[120px]">{sale.customers?.name || "Walk-In"}</p>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="w-7 h-7 bg-slate-100 rounded-[var(--ui-radius-sm)] flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                                    <User size={14} />
+                                                </div>
+                                                <span className="text-[13px] font-bold text-slate-900">{sale.customers?.name || "Walk-In Customer"}</span>
                                             </div>
-                                        </div>
-
-                                        <div className="text-right md:px-6 shrink-0">
-                                            <p className="text-[8px] md:text-[9px] font-black text-muted-foreground uppercase leading-none mb-0.5 md:mb-1 tracking-widest">Grand Total</p>
-                                            <p className="text-lg md:text-2xl font-black text-primary italic tracking-tighter">${Number(sale.total_amount).toLocaleString()}</p>
-                                        </div>
-
-                                        <button
-                                            onClick={() => fetchSaleDetails(sale)}
-                                            className="p-3 md:p-4 bg-primary text-white rounded-xl md:rounded-2xl shadow-lg shadow-primary/20 hover:scale-110 active:scale-95 transition-all shrink-0"
-                                        >
-                                            <Eye size={18} strokeWidth={1.5} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full uppercase tracking-wider group-hover:bg-primary/5 group-hover:text-primary transition-colors">
+                                                {sale.payment_method}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-right pr-6">
+                                            <span className="text-sm font-black text-slate-900 italic tracking-tight">${Number(sale.total_amount).toLocaleString()}</span>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => fetchSaleDetails(sale)}
+                                                className="h-8 w-8 rounded-[var(--ui-radius-sm)] text-slate-300 hover:text-primary hover:bg-white border border-transparent hover:border-slate-100 shadow-none"
+                                            >
+                                                <Eye size={16} strokeWidth={2.5} />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
                 </div>
 
-                {/* Spacing for fixed pagination on mobile */}
-                <div className="h-20 lg:h-0" />
-            </main>
-
-            {/* Pagination & Stats - Fixed on mobile, normal on desktop */}
-            <div className="fixed bottom-0 left-0 right-0 bg-[#F8F9FA]/90 md:bg-white/80 backdrop-blur-md lg:relative lg:bg-transparent border-t lg:border-none border-primary/5 p-4 lg:p-0 lg:mt-6 z-50 flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto px-2 lg:px-10 w-full gap-4 sm:gap-0">
-                    <div className="hidden lg:block flex-1">
-                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-40 italic">
-                            {totalCount} entries
-                        </p>
+                {/* Fixed Pagination Bar outside the scroll area */}
+                <div className="flex items-center justify-between h-10 px-6 py-1 bg-primary/[0.02] border-t border-primary/5 shrink-0">
+                    <div className="flex items-center gap-6 leading-none">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic leading-none opacity-60">Density</span>
+                            <div className="flex items-center px-1.5 py-0.5 bg-primary/5 border border-primary/10 rounded-[var(--ui-radius-sm)] text-[10px] font-black text-primary italic opacity-70">
+                                {PAGE_SIZE}
+                            </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic leading-none opacity-60">
+                            Page {page + 1} of {Math.ceil(totalCount / PAGE_SIZE) || 1} • {sales.length}/{totalCount} records
+                        </span>
                     </div>
-                    
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <button
+
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             disabled={page === 0 || loading}
                             onClick={() => setPage(page - 1)}
-                            className="p-3 bg-white border border-primary/5 rounded-xl md:rounded-2xl hover:bg-primary hover:text-white transition-all disabled:opacity-20 shadow-sm grow sm:grow-0"
+                            className="h-6 w-6 rounded-md text-slate-400 hover:text-primary hover:bg-white border border-transparent hover:border-primary/20 transition-all disabled:opacity-20"
                         >
-                            <ChevronLeft size={18} strokeWidth={1.5} />
-                        </button>
-                        <div className="flex items-center justify-center px-6 py-3 bg-white border border-primary/5 rounded-xl md:rounded-2xl shadow-sm text-xs font-black text-primary italic shrink-0">
-                           {page + 1}
+                            <ChevronLeft size={14} strokeWidth={2.5} />
+                        </Button>
+                        <div className="min-w-[20px] h-6 flex items-center justify-center text-[10px] font-black text-primary italic px-2 bg-white border border-primary/10 rounded-md shadow-sm leading-none">
+                            {page + 1}
                         </div>
-                        <button
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             disabled={(page + 1) * PAGE_SIZE >= totalCount || loading}
                             onClick={() => setPage(page + 1)}
-                            className="p-3 bg-white border border-primary/5 rounded-xl md:rounded-2xl hover:bg-primary hover:text-white transition-all disabled:opacity-20 shadow-sm grow sm:grow-0"
+                            className="h-6 w-6 rounded-md text-slate-400 hover:text-primary hover:bg-white border border-transparent hover:border-primary/20 transition-all disabled:opacity-20"
                         >
-                            <ChevronRight size={18} strokeWidth={1.5} />
-                        </button>
+                            <ChevronRight size={14} strokeWidth={2.5} />
+                        </Button>
                     </div>
-
-                    <div className="hidden lg:block flex-1" />
                 </div>
             </div>
 
-            {/* DETAIL MODAL - Extracted */}
+            {/* Filters Popup */}
+            {showFilters && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-[110] p-0 sm:p-4 animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-lg rounded-t-[var(--ui-radius-xl)] sm:rounded-[var(--ui-radius-xl)] shadow-2xl border border-slate-200 overflow-hidden relative flex flex-col p-6 sm:p-8 space-y-6 animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-primary/10 text-primary rounded-[var(--ui-radius-md)] shadow-inner">
+                                    <SlidersHorizontal size={18} strokeWidth={2.5} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tight leading-none">Sales Filters</h3>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 italic">Transaction Search Matrix</p>
+                                </div>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={() => setShowFilters(false)} className="h-8 w-8 rounded-[var(--ui-radius-sm)] text-slate-400">
+                                <X size={20} />
+                            </Button>
+                        </div>
+
+                        <div className="space-y-6 overflow-y-auto max-h-[70vh] pr-2 custom-scrollbar">
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic opacity-70">Time Horizon</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {['today', '7days', 'month', 'all', 'custom'].map(type => (
+                                        <button
+                                            key={type}
+                                            onClick={() => setDateFilter(type as FilterType)}
+                                            className={cn(
+                                                "px-3 py-2 rounded-[var(--ui-radius-md)] text-[10px] font-black uppercase tracking-widest border transition-all italic",
+                                                dateFilter === type ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-white text-slate-500 border-slate-200 hover:border-primary/20 hover:text-primary"
+                                            )}
+                                        >
+                                            {type === '7days' ? 'Last 7D' : type === 'all' ? 'Historical' : type}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {dateFilter === 'custom' && (
+                                <div className="space-y-3 animate-in slide-in-from-top-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic opacity-70">Date Range Boundary</label>
+                                    <div className="grid grid-cols-2 gap-3 p-4 bg-slate-50/50 rounded-[var(--ui-radius-lg)] border border-slate-200/60">
+                                        <Input
+                                            type="date"
+                                            value={startDate}
+                                            onChange={(e) => setStartDate(e.target.value)}
+                                            className="h-10 bg-white border-slate-200 rounded-[var(--ui-radius-md)] text-[11px] font-bold text-slate-600"
+                                        />
+                                        <Input
+                                            type="date"
+                                            value={endDate}
+                                            onChange={(e) => setEndDate(e.target.value)}
+                                            className="h-10 bg-white border-slate-200 rounded-[var(--ui-radius-md)] text-[11px] font-bold text-slate-600"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic opacity-70">Payment Protocol</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['all', 'Cash', 'Credit Card', 'Debit Card', 'Transfer'].map(method => (
+                                        <button
+                                            key={method}
+                                            onClick={() => setFilterPaymentMethod(method)}
+                                            className={cn(
+                                                "px-4 py-2.5 rounded-[var(--ui-radius-md)] text-[10px] font-black uppercase tracking-widest border transition-all italic",
+                                                filterPaymentMethod === method ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-white text-slate-500 border-slate-200 hover:border-primary/20 hover:text-primary"
+                                            )}
+                                        >
+                                            {method}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-4 border-t border-slate-100 mb-2">
+                            <Button
+                                variant="outline"
+                                onClick={resetFilters}
+                                className="flex-1 h-12 rounded-[var(--ui-radius-md)] border-slate-200 text-slate-400 text-[11px] font-black uppercase tracking-widest italic"
+                            >
+                                Reset Matrix
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setShowFilters(false);
+                                    fetchSales();
+                                }}
+                                className="flex-[2] h-12 rounded-[var(--ui-radius-md)] bg-primary text-white text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-95 transition-all italic"
+                            >
+                                Apply
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Detail Modal Container */}
             <SaleDetailModal
                 selectedSale={selectedSale}
                 setSelectedSale={setSelectedSale}

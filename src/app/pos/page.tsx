@@ -100,7 +100,7 @@ export default function POSPage() {
 
             {/* Global States */}
             {showSuccess && (
-                <div className="fixed inset-0 bg-primary/98 backdrop-blur-3xl flex items-center justify-center z-[200] animate-in fade-in duration-700">
+                <div className="fixed inset-0 flex items-center justify-center z-[200] animate-in fade-in duration-700">
                     <div className="text-center p-12 space-y-10 animate-in zoom-in duration-700">
                         <div className="w-64 h-64 bg-white text-primary rounded-[5rem] flex items-center justify-center mx-auto shadow-2xl">
                             <CheckCircle2 size={140} strokeWidth={1.5} className="animate-bounce" />
