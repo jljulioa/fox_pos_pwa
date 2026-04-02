@@ -41,6 +41,7 @@ export function InventoryStats({ products }: InventoryStatsProps) {
             color: "text-red-500",
             bgColor: "bg-red-50",
             borderColor: "border-red-100",
+            bgHover: "hover:bg-red-100",
             icon: ArchiveX
         },
         {
@@ -49,6 +50,7 @@ export function InventoryStats({ products }: InventoryStatsProps) {
             color: "text-orange-500",
             bgColor: "bg-orange-50",
             borderColor: "border-orange-100",
+            bgHover: "hover:bg-orange-100",
             icon: AlertTriangle
         },
         {
@@ -57,6 +59,7 @@ export function InventoryStats({ products }: InventoryStatsProps) {
             color: "text-emerald-600",
             bgColor: "bg-emerald-50",
             borderColor: "border-emerald-100",
+            bgHover: "hover:bg-emerald-100",
             icon: DollarSign
         },
         {
@@ -64,7 +67,8 @@ export function InventoryStats({ products }: InventoryStatsProps) {
             value: formatNumber(totalQty),
             color: "text-primary",
             bgColor: "bg-primary/5",
-            borderColor: "border-primary/10",
+            borderColor: "border-primary",
+            bgHover: "hover:bg-primary/10",
             icon: Package
         }
     ];
@@ -75,29 +79,18 @@ export function InventoryStats({ products }: InventoryStatsProps) {
                 <div 
                     key={idx}
                     className={cn(
-                        "bg-white p-3.5 rounded-[var(--ui-radius-md)] border shadow-sm flex flex-col gap-2 transition-all hover:bg-slate-50/50",
-                        stat.borderColor
+                        "bg-white p-3.5 rounded-[var(--ui-radius-md)] shadow-sm flex flex-col gap-2 transition-all hover:bg-slate-50/50",
+                        stat.borderColor, 
+                        stat.bgColor,
+                        stat.bgHover
                     )}
                 >
-                    <div className="flex items-center justify-between">
-                        <div className={cn(
-                            "w-8 h-8 rounded-[var(--ui-radius-sm)] flex items-center justify-center shadow-none",
-                            stat.bgColor,
-                            stat.color
-                        )}>
-                            <stat.icon size={14} strokeWidth={2.5} />
-                        </div>
-                        <span className={cn(
-                            "text-sm font-black italic tracking-tight",
-                            stat.color
-                        )}>
-                            {stat.value}
-                        </span>
-                    </div>
-
-                    <div className="flex flex-col">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                    <div className="flex flex-row justify-between">
+                        <span className={cn("text-[12px] font-bold text-slate-400 uppercase tracking-widest leading-none", stat.color)}>
                             {stat.label}
+                        </span>
+                        <span className={cn("text-[12px] font-bold text-slate-400 uppercase tracking-widest leading-none animate-pulse", stat.color)}>
+                            {stat.value}
                         </span>
                     </div>
                 </div>

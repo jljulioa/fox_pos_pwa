@@ -31,7 +31,7 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <div className="flex min-h-screen bg-slate-200">
+        <div className="flex min-h-screen bg-slate-50 lg:bg-primary/[0.03]">
             <Sidebar />
 
             <main className={cn(
@@ -43,7 +43,7 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
                         {children}
                     </div>
                 ) : (
-                    <div className="pt-6 pb-28 px-4 lg:pt-8 lg:pb-4 lg:px-10 max-w-[1920px] mx-auto">
+                    <div className="pt-6 px-3 lg:pt-3 h-screen pb-28 lg:pb-3">
                         {children}
                     </div>
                 )}

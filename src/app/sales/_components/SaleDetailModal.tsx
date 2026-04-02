@@ -28,7 +28,7 @@ export function SaleDetailModal({
 
     return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-3xl rounded-[var(--ui-radius-lg)] shadow-2xl border border-slate-200 overflow-hidden relative flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
+            <div className="bg-white w-full max-w-3xl rounded-[var(--ui-radius-lg)] shadow-2xl border border-slate-200 overflow-hidden relative flex flex-col h-[90vh] animate-in zoom-in-95 duration-300">
                 
                 {/* Modal Header */}
                 <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">

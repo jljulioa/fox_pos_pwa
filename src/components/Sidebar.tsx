@@ -58,6 +58,7 @@ const sections = [
 ];
 
 import { useLayout } from "@/context/LayoutContext";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function Sidebar() {
     const pathname = usePathname();
@@ -187,8 +188,8 @@ export function Sidebar() {
                             </div>
                             {!isCollapsed && (
                                 <div className="flex flex-col">
-                                    <span className="text-base font-black text-primary leading-none tracking-tight">FoxPOS</span>
-                                    <span className="text-[9px] text-accent font-bold tracking-wider uppercase mt-0.5 opacity-70">v2.4.0</span>
+                                    <span className="text-base font-black text-primary leading-none tracking-tight">VENDA</span>
+                                    <span className="text-[9px] text-primary font-bold tracking-wider uppercase mt-0.5 opacity-100">FOX MP</span>
                                 </div>
                             )}
                         </div>
@@ -204,7 +205,7 @@ export function Sidebar() {
                     {/* Navigation */}
                     <nav className="flex-1 overflow-y-auto px-2 space-y-4 custom-scrollbar pb-4">
                         {sections.map((section) => (
-                            <div key={section.title} className="space-y-0.5 relative">
+                            <div key={section.title} className="space-y-0.5  relative">
                                 {!isCollapsed && (
                                     <p className="px-3 text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] mb-2 pointer-events-none">
                                         {section.title}
@@ -212,9 +213,9 @@ export function Sidebar() {
                                 )}
                                 {section.items.map((item) => {
                                     const isActive = pathname === item.href;
-                                    return (
+                                    
+                                    const linkContent = (
                                         <Link
-                                            key={item.href}
                                             href={item.href}
                                             className={cn(
                                                 "flex items-center gap-2.5 px-3 py-2 rounded-[var(--sidebar-item-radius)] transition-all duration-300 group relative",
@@ -238,14 +239,24 @@ export function Sidebar() {
                                             {isActive && !isCollapsed && (
                                                 <div className="absolute right-3 w-1 h-1 bg-white/40 rounded-full" />
                                             )}
-
-                                            {/* Tooltip for collapsed state */}
-                                            {isCollapsed && (
-                                                <div className="lg:block hidden absolute left-14 px-2 py-1 bg-primary text-white text-[10px] font-bold rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 shadow-xl">
-                                                    {item.label}
-                                                </div>
-                                            )}
                                         </Link>
+                                    );
+                                    
+                                    return (
+                                        <div key={item.href} >
+                                            {isCollapsed ? (
+                                                <Tooltip>
+                                                    <TooltipTrigger>
+                                                        {linkContent}
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="right" sideOffset={14} className="font-semibold px-2 py-1 text-xs bg-primary text-white">
+                                                        {item.label}
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            ) : (
+                                                linkContent
+                                            )}
+                                        </div>
                                     );
                                 })}
                             </div>

@@ -39,9 +39,9 @@ export function InventoryDesktopView({ products, loading, onEdit, onDelete }: In
 
     if (loading) {
         return (
-            <div className="space-y-4 px-0 md:px-6 lg:px-10">
+            <div className="space-y-4 pt-4 md:px-0 lg:px-0">
                 {[1, 2, 3, 4, 5].map(i => (
-                    <div key={i} className="h-16 rounded-xl bg-card animate-pulse shadow-sm w-full" />
+                    <div key={i} className="h-[calc(100vh/10)] rounded-[var(--ui-radius-lg)] bg-slate-100 animate-pulse shadow-sm w-full" />
                 ))}
             </div>
         );
@@ -62,7 +62,7 @@ export function InventoryDesktopView({ products, loading, onEdit, onDelete }: In
     }
 
     return (
-        <div className="flex-1 min-h-0 bg-white rounded-[var(--ui-radius-lg)] shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+        <div className="flex-1 min-h-0 bg-white rounded-[var(--ui-radius-lg)] border border-slate-200 flex flex-col overflow-hidden shadow-sm">
             <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar">
                 <Table>
                     <TableHeader className="bg-slate-50/50 sticky top-0 z-10 border-b border-slate-200">
@@ -79,7 +79,7 @@ export function InventoryDesktopView({ products, loading, onEdit, onDelete }: In
                     <TableBody>
                         {products.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-64 text-center">
+                                <TableCell colSpan={7} className="h-64 text-center ">
                                     <div className="flex flex-col items-center justify-center gap-3 opacity-20">
                                         <div className="p-4 border-2 border-dashed border-slate-300 rounded-[var(--ui-radius-xl)]">
                                             <Box size={32} />
@@ -95,7 +95,7 @@ export function InventoryDesktopView({ products, loading, onEdit, onDelete }: In
                                 return (
                                     <TableRow 
                                         key={product.id} 
-                                        className="group border-slate-100 hover:bg-slate-50/50 transition-colors"
+                                        className="group border-slate-100 hover:bg-slate-50/80 transition-colors"
                                     >
                                         <TableCell className="px-4 py-3"><Checkbox className="border-slate-200 data-[state=checked]:bg-primary transition-opacity opacity-50 group-hover:opacity-100 shadow-none" /></TableCell>
                                         <TableCell>

@@ -67,7 +67,7 @@ const CartItem = memo(({ item, index, updateItemPrice, updateQuantity, removeFro
     };
 
     return (
-        <TableRow className="group hover:bg-slate-50/50 transition-colors border-b-0 border-slate-50">
+        <TableRow className="group hover:bg-primary/[0.04] transition-colors border-b-0 border-primary/5">
             <TableCell className="px-6 py-3">
                 <span className="text-[10px] font-bold text-slate-400">{String(index + 1).padStart(2, '0')}</span>
             </TableCell>
@@ -190,11 +190,11 @@ export const PosDesktopView = memo(({
     total
 }: PosDesktopViewProps) => {
     return (
-        <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
+        <div className="flex h-screen bg-transparent overflow-hidden lg:p-3">
             {/* --- CENTRAL MAIN SECTION (The Ticket) --- */}
-            <section className="flex-1 flex flex-col min-w-0 bg-white">
+            <section className="flex-1 flex flex-col min-w-0 glass lg:rounded-[var(--sidebar-radius)] border border-primary/5 shadow-glass overflow-hidden">
                 {/* Ticket Header */}
-                <header className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <header className="px-6 py-4 border-b border-primary/5 bg-primary/[0.02] flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="p-2.5 bg-primary/5 rounded-[var(--ui-radius-md)] text-primary">
                             <Ticket size={20} strokeWidth={2.5} />
@@ -318,8 +318,8 @@ export const PosDesktopView = memo(({
                 </header>
 
                 {/* Ticket Body (High-Density Table) */}
-                <main className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/20">
-                    <div className="bg-white rounded-[var(--ui-radius-lg)] shadow-sm border border-slate-100 overflow-hidden max-w-7xl mx-auto w-full">
+                <main className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-primary/[0.02]">
+                    <div className="glass-dark rounded-[var(--ui-radius-lg)] border border-primary/5 overflow-hidden max-w-7xl mx-auto w-full">
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
@@ -362,7 +362,7 @@ export const PosDesktopView = memo(({
                 </main>
 
                 {/* Bottom Summary Section */}
-                <footer className="p-8 bg-white border-t border-slate-100">
+                <footer className="p-8 glass border-t border-primary/5 bg-primary/[0.02]">
                     <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-8 max-w-7xl mx-auto w-full">
                         <div className="flex flex-wrap items-center gap-3 w-full">
                             <div className="flex-1 min-w-[130px] p-3 bg-slate-50 rounded-[var(--ui-radius-md)] border border-slate-100">

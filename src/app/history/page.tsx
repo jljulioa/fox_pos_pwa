@@ -67,9 +67,9 @@ export default function TransactionsPage() {
     }, [fetchTransactions]);
 
     return (
-        <div className="flex flex-col h-[calc(100vh-8.5rem)] lg:h-[calc(100vh-4rem)] lg:-m-4 overflow-hidden bg-white sm:bg-slate-50/50">
+        <div className="flex flex-col overflow-hidden">
             {/* Header Section */}
-            <header className="px-6 py-6 border-b border-slate-200 bg-white shrink-0 shadow-sm z-20">
+            <header className="px-6 py-6 border-b border-slate-200 bg-white shrink-0 shadow-sm z-20 rounded-[var(--ui-radius-lg)]">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 max-w-[1600px] mx-auto">
                     <div className="space-y-1.5 flex-1">
                         <div className="flex items-center gap-3">
@@ -125,7 +125,7 @@ export default function TransactionsPage() {
             </header>
 
             {/* Content Space */}
-            <main className="flex-1 overflow-hidden p-6 max-w-[1600px] mx-auto w-full flex flex-col gap-6">
+            <main className="flex-1 overflow-hidden pt-6 max-w-[1600px] mx-auto w-full flex flex-col gap-6">
                 <div className="flex-1 overflow-hidden">
                     <div className="hidden lg:block h-full">
                         <KardexDesktopView 

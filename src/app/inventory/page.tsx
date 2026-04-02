@@ -194,14 +194,14 @@ export default function InventoryPage() {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-8.5rem)] lg:h-[calc(100vh-4rem)] lg:-m-4 overflow-hidden sm:bg-slate-50/50">
+        <div className="md:px-3 md:py-3 flex flex-col h-full gap-6 overflow-hidden md:bg-white rounded-[var(--sidebar-radius)] md:shadow-glass">
             {/* Header Section */}
-            <header className="px-6 py-6 border-b border-slate-200 bg-white shrink-0 shadow-sm z-20">
+            <header className="px-5 py-5 border-b border-primary/5 glass shrink-0 shadow-glass z-20 rounded-[var(--sidebar-radius)] mb-3">
                 <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 max-w-[1600px] mx-auto">
                     <div className="space-y-1.5 flex-1">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-primary/10 text-primary rounded-[var(--ui-radius-lg)] flex items-center justify-center shadow-inner">
-                                <Package size={20} strokeWidth={2.5} />
+                            <div className="p-2.5 bg-primary/10 text-primary rounded-[var(--ui-radius-lg)]">
+                                <Package size={18} strokeWidth={2.5} />
                             </div>
                             <h1 className="text-xl font-black tracking-tight text-slate-800 uppercase italic leading-none">Catalog Management</h1>
                         </div>
@@ -274,7 +274,7 @@ export default function InventoryPage() {
             </div>
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-hidden p-0 max-w-[1600px] mx-auto w-full flex flex-col gap-6">
+            <main className="flex-1 pb-3 overflow-hidden p-0 max-w-[1600px] mx-auto w-full flex flex-col">
                 {pageError && (
                     <div className="p-4 bg-red-50 text-red-600 rounded-[var(--ui-radius-md)] border border-red-100 flex items-center gap-3 shadow-sm shrink-0">
                         <AlertCircle size={18} strokeWidth={2.5} />

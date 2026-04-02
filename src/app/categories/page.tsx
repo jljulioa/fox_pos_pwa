@@ -135,7 +135,7 @@ export default function CategoriesPage() {
     );
 
     return (
-        <div className="flex flex-col h-[calc(100vh-8.5rem)] lg:h-[calc(100vh-4rem)] lg:-m-4 overflow-hidden bg-white sm:bg-slate-50/50">
+        <div className="flex flex-col h-[calc(100vh-8.5rem)] lg:h-[calc(100vh-4rem)] lg:m-4 overflow-hidden bg-white sm:bg-slate-50/50">
             {/* Header Section */}
             <header className="px-6 py-8 border-b border-slate-200 bg-white shrink-0">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 max-w-[1600px] mx-auto">
