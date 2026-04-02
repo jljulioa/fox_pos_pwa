@@ -440,7 +440,7 @@ export default function SalesHistoryPage() {
                                 }}
                                 className="flex-[2] h-12 rounded-[var(--ui-radius-md)] bg-primary text-white text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-95 transition-all italic"
                             >
-                                Apply Sales Filters
+                                Apply
                             </Button>
                         </div>
                     </div>

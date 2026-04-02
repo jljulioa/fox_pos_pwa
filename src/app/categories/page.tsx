@@ -135,24 +135,24 @@ export default function CategoriesPage() {
     );
 
     return (
-        <div className="flex flex-col h-[calc(100vh-8.5rem)] lg:h-[calc(100vh-4rem)] lg:m-4 overflow-hidden bg-white sm:bg-slate-50/50">
+        <div className="md:px-3 md:py-3 flex flex-col h-full gap-6 overflow-hidden md:bg-white rounded-[var(--sidebar-radius)] md:shadow-glass">
             {/* Header Section */}
-            <header className="px-6 py-8 border-b border-slate-200 bg-white shrink-0">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 max-w-[1600px] mx-auto">
-                    <div className="space-y-1.5">
+            <header className="px-5 py-5 border-b border-primary/5 glass shrink-0 shadow-glass z-20 rounded-[var(--sidebar-radius)] mb-3">
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 max-w-[1600px] mx-auto">
+                    <div className="space-y-1.5 flex-1">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-primary/10 text-primary rounded-[var(--ui-radius-lg)] flex items-center justify-center shadow-inner">
-                                <LayoutGrid size={20} strokeWidth={2.5} />
+                            <div className="p-2.5 bg-primary/10 text-primary rounded-[var(--ui-radius-lg)] shadow-inner">
+                                <LayoutGrid size={18} strokeWidth={2.5} />
                             </div>
-                            <h1 className="text-xl font-black tracking-tight text-slate-800 uppercase italic">Hierarchy Control</h1>
+                            <h1 className="text-xl font-black tracking-tight text-slate-800 uppercase italic leading-none">Hierarchy Control</h1>
                         </div>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 italic ml-1">
                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                            Active Taxonomy Protocol
+                            Active Taxonomy Protocol • {filteredCategories.length} Nodes Configured
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="flex items-center gap-2.5 w-full xl:w-auto">
                         <div className="relative flex-1 md:w-80 group">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={14} />
                             <Input
@@ -160,7 +160,7 @@ export default function CategoriesPage() {
                                 placeholder="Filter Hierarchy..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="h-10 pl-9 bg-slate-50 border-slate-200 rounded-[var(--ui-radius-md)] text-[11px] font-bold uppercase italic tracking-widest text-slate-600 focus:bg-white transition-all shadow-inner"
+                                className="h-8 pl-9 bg-slate-50 border-slate-200 rounded-[var(--ui-radius-md)] text-[11px] font-bold uppercase italic tracking-widest text-slate-600 focus:bg-white transition-all shadow-inner"
                             />
                             {searchTerm && (
                                 <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500">
@@ -181,31 +181,33 @@ export default function CategoriesPage() {
 
             {/* Error Message */}
             {pageError && (
-                <div className="mx-6 mt-6 p-4 bg-red-50 text-red-600 rounded-[var(--ui-radius-lg)] border border-red-100 flex items-center gap-4 animate-in slide-in-from-top duration-300">
+                <div className="mx-6 p-4 bg-red-50 text-red-600 rounded-[var(--ui-radius-lg)] border border-red-100 flex items-center gap-4 animate-in slide-in-from-top duration-300 shrink-0">
                     <AlertCircle size={18} />
                     <p className="text-[11px] font-bold uppercase tracking-widest leading-none">{pageError}</p>
                     <button onClick={fetchCategories} className="ml-auto px-4 py-1.5 bg-red-600 text-white rounded-[0.4rem] text-[9px] font-black uppercase tracking-widest">Retry Sync</button>
                 </div>
             )}
 
-            {/* Content Space */}
-            <main className="flex-1 overflow-hidden p-6 max-w-[1600px] mx-auto w-full">
-                {/* Desktop View */}
-                <div className="hidden lg:block h-full">
-                    <CategoryDesktopView 
-                        categories={filteredCategories}
-                        onEdit={openEditModal}
-                        onDelete={handleDelete}
-                    />
-                </div>
+            {/* Main Content Area */}
+            <main className="flex-1 pb-3 overflow-hidden p-0 max-w-[1600px] mx-auto w-full flex flex-col">
+                <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+                    {/* Desktop View */}
+                    <div className="hidden lg:flex flex-col flex-1 min-h-0">
+                        <CategoryDesktopView 
+                            categories={filteredCategories}
+                            onEdit={openEditModal}
+                            onDelete={handleDelete}
+                        />
+                    </div>
 
-                {/* Mobile View */}
-                <div className="lg:hidden h-full overflow-y-auto custom-scrollbar pr-1">
-                    <CategoryMobileView 
-                        categories={filteredCategories}
-                        onEdit={openEditModal}
-                        onDelete={handleDelete}
-                    />
+                    {/* Mobile View */}
+                    <div className="lg:hidden flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 flex flex-col">
+                        <CategoryMobileView 
+                            categories={filteredCategories}
+                            onEdit={openEditModal}
+                            onDelete={handleDelete}
+                        />
+                    </div>
                 </div>
             </main>
 

@@ -67,16 +67,16 @@ export default function TransactionsPage() {
     }, [fetchTransactions]);
 
     return (
-        <div className="flex flex-col overflow-hidden">
+        <div className="md:px-3 md:py-3 flex flex-col h-full gap-6 overflow-hidden md:bg-white rounded-[var(--sidebar-radius)] md:shadow-glass">
             {/* Header Section */}
-            <header className="px-6 py-6 border-b border-slate-200 bg-white shrink-0 shadow-sm z-20 rounded-[var(--ui-radius-lg)]">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 max-w-[1600px] mx-auto">
+            <header className="px-5 py-5 border-b border-primary/5 glass shrink-0 shadow-glass z-20 rounded-[var(--sidebar-radius)] mb-3">
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 max-w-[1600px] mx-auto">
                     <div className="space-y-1.5 flex-1">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-primary/10 text-primary rounded-[var(--ui-radius-lg)] flex items-center justify-center shadow-inner">
-                                <History size={20} strokeWidth={2.5} />
+                            <div className="p-2.5 bg-primary/10 text-primary rounded-[var(--ui-radius-lg)] shadow-inner">
+                                <History size={18} strokeWidth={2.5} />
                             </div>
-                            <h1 className="text-xl font-black tracking-tight text-slate-800 uppercase italic">Stock Ledger Control</h1>
+                            <h1 className="text-xl font-black tracking-tight text-slate-800 uppercase italic leading-none">Stock Ledger Control</h1>
                         </div>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 italic ml-1">
                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
@@ -84,7 +84,7 @@ export default function TransactionsPage() {
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-2.5 w-full md:w-auto">
+                    <div className="flex items-center gap-2.5 w-full xl:w-auto">
                         <div className="relative flex-1 md:w-80 group">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={14} />
                             <Input
@@ -92,7 +92,7 @@ export default function TransactionsPage() {
                                 placeholder="Quick Search Ledger..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="h-10 pl-9 bg-slate-50 border-slate-200 rounded-[var(--ui-radius-md)] text-[11px] font-bold uppercase italic tracking-widest text-slate-600 focus:bg-white transition-all shadow-inner"
+                                className="h-8 pl-9 bg-slate-50 border-slate-200 rounded-[var(--ui-radius-md)] text-[11px] font-bold uppercase italic tracking-widest text-slate-600 focus:bg-white transition-all shadow-inner"
                             />
                             {searchTerm && (
                                 <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500">
@@ -105,29 +105,38 @@ export default function TransactionsPage() {
                             variant="outline"
                             onClick={() => setShowFilterModal(true)}
                             className={cn(
-                                "h-10 px-5 border-slate-200 bg-white rounded-[var(--ui-radius-md)] font-black text-[11px] uppercase tracking-widest italic flex items-center gap-2.5 transition-all shadow-sm",
+                                "h-10 px-3 sm:px-5 border-slate-200 bg-white rounded-[var(--ui-radius-md)] font-black text-[11px] uppercase tracking-widest italic flex items-center gap-2 sm:gap-2.5 transition-all shadow-sm",
                                 activeFilterCount > 0 ? "border-primary/40 text-primary bg-primary/5 ring-1 ring-primary/10" : "text-slate-500 hover:bg-slate-50 hover:text-primary"
                             )}
                         >
                             <SlidersHorizontal size={14} className={activeFilterCount > 0 ? "animate-pulse" : ""} strokeWidth={2.5} />
-                            {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : "Filters"}
+                            <span className="hidden sm:inline">
+                                {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : "Filters"}
+                            </span>
+                            {activeFilterCount > 0 && (
+                                <span className="sm:hidden font-black">
+                                    {activeFilterCount}
+                                </span>
+                            )}
                         </Button>
 
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-10 w-10 text-slate-400 hover:bg-slate-50 rounded-[var(--ui-radius-md)] border border-slate-100 shadow-sm"
-                        >
-                            <Download size={16} strokeWidth={2.5} />
-                        </Button>
+                        <div className="flex items-center gap-2 pl-2 border-l border-slate-100">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-10 w-10 text-slate-400 hover:bg-slate-50 rounded-[var(--ui-radius-md)] border border-slate-100 shadow-sm"
+                            >
+                                <Download size={16} strokeWidth={2.5} />
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </header>
 
-            {/* Content Space */}
-            <main className="flex-1 overflow-hidden pt-6 max-w-[1600px] mx-auto w-full flex flex-col gap-6">
-                <div className="flex-1 overflow-hidden">
-                    <div className="hidden lg:block h-full">
+            {/* Main Content Area */}
+            <main className="flex-1 pb-3 overflow-hidden p-0 max-w-[1600px] mx-auto w-full flex flex-col">
+                <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+                    <div className="hidden lg:flex flex-col flex-1 min-h-0">
                         <KardexDesktopView 
                             transactions={transactions}
                             loading={loading}
@@ -137,7 +146,7 @@ export default function TransactionsPage() {
                             pageSize={PAGE_SIZE}
                         />
                     </div>
-                    <div className="lg:hidden h-full overflow-y-auto custom-scrollbar pr-1">
+                    <div className="lg:hidden flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 flex flex-col">
                         <KardexMobileView 
                             transactions={transactions}
                             loading={loading}

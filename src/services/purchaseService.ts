@@ -44,41 +44,6 @@ export const purchaseService = {
       if (paymentError) throw paymentError;
     }
 
-    // 4. Update Inventory & Log Transactions
-    for (const item of items) {
-      // Get current stock
-      const { data: productData, error: productError } = await supabase
-        .from("products")
-        .select("stock, name")
-        .eq("id", item.product_id)
-        .single();
-        
-      if (!productError && productData) {
-        const stockBefore = productData.stock;
-        const stockAfter = stockBefore + item.quantity;
-        
-        // Update product stock and update cost to the latest purchase cost
-        // We use an RPC to bypass the auto-trigger which generates "MANUAL" transactions
-        await supabase.rpc("set_stock_skip_trigger", { 
-          p_product_id: item.product_id, 
-          p_new_stock: stockAfter, 
-          p_cost: item.cost_price 
-        });
-
-        // Insert inventory transaction
-        await supabase.from("inventory_transactions").insert({
-          product_id: item.product_id,
-          product_name: productData.name,
-          transaction_type: "purchase",
-          quantity_change: item.quantity,
-          stock_before: stockBefore,
-          stock_after: stockAfter,
-          related_document_id: purchase.invoice_number,
-          notes: `Restock from invoice ${purchase.invoice_number}`
-        });
-      }
-    }
-
     return purchaseData;
   },
 

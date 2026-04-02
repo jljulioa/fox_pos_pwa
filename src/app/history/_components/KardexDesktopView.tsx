@@ -32,45 +32,45 @@ export function KardexDesktopView({
     pageSize 
 }: KardexDesktopViewProps) {
     return (
-        <div className="bg-white rounded-[var(--ui-radius-xl)] border border-slate-200 overflow-hidden shadow-sm flex flex-col h-full">
-            <div className="overflow-y-auto flex-1 custom-scrollbar">
+        <div className="flex-1 min-h-0 bg-white rounded-[var(--ui-radius-lg)] border border-slate-200 flex flex-col overflow-hidden shadow-sm">
+            <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar">
                 <Table>
-                    <TableHeader className="sticky top-0 bg-slate-50/90 backdrop-blur-md z-10 border-b border-slate-200">
-                        <TableRow className="hover:bg-transparent border-none">
-                            <TableHead className="w-[180px] py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic text-center">Movement Type</TableHead>
-                            <TableHead className="py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Product Specifications</TableHead>
-                            <TableHead className="py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Timeline</TableHead>
-                            <TableHead className="py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Traceability (Stock)</TableHead>
-                            <TableHead className="py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic text-left">Ref Document</TableHead>
+                    <TableHeader className="bg-slate-50/50 sticky top-0 z-10 border-b border-slate-200">
+                        <TableRow className="hover:bg-transparent border-slate-200">
+                            <TableHead className="w-[180px] text-[10px] font-black text-slate-400 uppercase tracking-widest h-11 text-center">Movement Type</TableHead>
+                            <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest h-11">Product Specifications</TableHead>
+                            <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest h-11">Timeline</TableHead>
+                            <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest h-11">Traceability (Stock)</TableHead>
+                            <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest h-11 text-left">Ref Document</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {transactions.map((t) => (
                             <TableRow 
                                 key={t.id} 
-                                className="group border-b border-slate-100 hover:bg-slate-50/50 transition-all duration-200"
+                                className="group border-slate-100 hover:bg-slate-50/80 transition-colors"
                             >
-                                <TableCell className="py-3 px-6">
+                                <TableCell className="px-4 py-3">
                                     <div className="flex items-center justify-center">
                                         <div className={cn(
-                                            "w-10 h-10 rounded-[var(--ui-radius-md)] flex items-center justify-center transition-all shadow-inner",
-                                            t.transaction_type === "sale" ? "bg-red-50 text-red-500 shadow-red-500/5 group-hover:bg-red-500 group-hover:text-white" : "bg-emerald-50 text-emerald-600 shadow-emerald-500/5 group-hover:bg-emerald-500 group-hover:text-white"
+                                            "w-8 h-8 rounded-[var(--ui-radius-sm)] flex items-center justify-center transition-all shadow-sm",
+                                            t.transaction_type === "sale" ? "bg-red-50 text-red-500 border border-red-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"
                                         )}>
-                                            {t.transaction_type === "sale" ? <ArrowDownRight size={18} /> : <ArrowUpRight size={18} />}
+                                            {t.transaction_type === "sale" ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="py-3 px-6">
-                                    <div className="flex flex-col gap-0.5">
-                                        <span className="text-[13px] font-black text-slate-700 uppercase italic tracking-tight group-hover:text-primary transition-colors leading-none truncate max-w-[240px]">
+                                <TableCell className="px-4 py-3">
+                                    <div className="flex flex-col">
+                                        <span className="text-[13px] font-bold text-slate-900 leading-tight italic truncate max-w-[240px]">
                                             {t.product_name || "UNKNOWN_COMPONENT"}
                                         </span>
-                                        <div className="flex items-center gap-1.5 mt-1">
+                                        <div className="flex items-center gap-1.5 mt-0.5">
                                             <span className={cn(
-                                                "px-2 py-0.5 text-[8px] font-black rounded-full uppercase tracking-tighter border",
-                                                t.transaction_type === "sale" ? "bg-red-50/50 text-red-500 border-red-100 group-hover:bg-white" : "bg-emerald-50/50 text-emerald-600 border-emerald-100 group-hover:bg-white"
+                                                "px-2 py-0.5 text-[8px] font-black rounded-full uppercase tracking-widest border",
+                                                t.transaction_type === "sale" ? "bg-red-50/50 text-red-500 border-red-100" : "bg-emerald-50/50 text-emerald-600 border-emerald-100"
                                             )}>
-                                                {t.transaction_type} protocol
+                                                {t.transaction_type}
                                             </span>
                                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest line-clamp-1 italic max-w-[150px]">
                                                 {t.notes || "No extra context"}
@@ -78,48 +78,46 @@ export function KardexDesktopView({
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="py-3 px-6">
-                                    <div className="flex flex-col gap-1.5">
-                                        <div className="flex items-center gap-2">
-                                            <Calendar size={12} className="text-slate-300" />
+                                <TableCell className="px-4 py-3">
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-1.5">
+                                            <Calendar size={10} className="text-slate-300" />
                                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
                                                 {new Date(t.transaction_date).toLocaleDateString()}
                                             </span>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <Clock size={12} className="text-slate-300" />
+                                        <div className="flex items-center gap-1.5">
+                                            <Clock size={10} className="text-slate-300" />
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
                                                 {new Date(t.transaction_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="py-3 px-6">
-                                    <div className="flex flex-col gap-1.5">
-                                        <div className="flex items-center gap-3 bg-slate-50/80 px-3 py-1.5 rounded-md border border-slate-100 group-hover:bg-white group-hover:border-slate-200 transition-all">
-                                            <div className="flex flex-col items-center">
-                                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-0.5">Pre</span>
-                                                <span className="text-[11px] font-black text-slate-400">{t.stock_before}</span>
+                                <TableCell className="px-4 py-3">
+                                    <div className="inline-flex items-center gap-3 bg-slate-50/50 px-2.5 py-1 rounded-[var(--ui-radius-sm)] border border-slate-100 group-hover:bg-white group-hover:border-slate-200 transition-all">
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-[7px] font-black text-slate-400 uppercase leading-none mb-0.5">Pre</span>
+                                            <span className="text-[10px] font-black text-slate-400 leading-none">{t.stock_before}</span>
+                                        </div>
+                                        <div className={cn(
+                                            "w-5 h-5 rounded-full flex items-center justify-center transition-colors shadow-sm",
+                                            t.transaction_type === "sale" ? "bg-red-50 text-red-500" : "bg-emerald-50 text-emerald-500"
+                                        )}>
+                                            <div className="font-black text-[9px]">
+                                                {t.transaction_type === "sale" ? "-" : "+"}{Math.abs(t.quantity_change)}
                                             </div>
-                                            <div className={cn(
-                                                "w-6 h-6 rounded-full flex items-center justify-center transition-colors shadow-sm",
-                                                t.transaction_type === "sale" ? "bg-red-50 text-red-500" : "bg-emerald-50 text-emerald-500"
-                                            )}>
-                                                <div className="font-black text-[9px]">
-                                                    {t.transaction_type === "sale" ? "-" : "+"}{Math.abs(t.quantity_change)}
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col items-center">
-                                                <span className="text-[8px] font-black text-primary uppercase tracking-tighter leading-none mb-0.5">Post</span>
-                                                <span className="text-[12px] font-black text-primary italic underline decoration-primary/20 underline-offset-4">{t.stock_after}</span>
-                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-[7px] font-black text-primary uppercase leading-none mb-0.5">Post</span>
+                                            <span className="text-[11px] font-black text-primary italic leading-none">{t.stock_after}</span>
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="py-3 px-6">
-                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 text-slate-500 rounded-md border border-slate-100 group-hover:bg-white group-hover:border-primary/20 transition-all shadow-inner">
-                                        <Hash size={10} className="text-primary/40" />
-                                        <span className="text-[10px] font-black text-primary tracking-widest uppercase italic">
+                                <TableCell className="px-4 py-3">
+                                    <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-slate-50 text-slate-500 rounded-[var(--ui-radius-sm)] border border-slate-100 group-hover:bg-white transition-all">
+                                        <Hash size={10} className="text-slate-400" />
+                                        <span className="text-[10px] font-black text-primary tracking-widest uppercase italic leading-none">
                                             {t.related_document_id || "SYSTEM_GEN"}
                                         </span>
                                     </div>
@@ -130,13 +128,10 @@ export function KardexDesktopView({
                 </Table>
             </div>
             
-            <div className="px-6 py-2 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between shrink-0 h-10">
-                <div className="flex items-center gap-4">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic leading-none">
-                        Sync Status: <span className="text-emerald-500">Online</span>
-                    </span>
-                    <span className="text-[9px] font-bold text-slate-300 uppercase tracking-[0.2em] italic hidden sm:inline leading-none">
-                        Audit Ledger V4.2
+            <div className="flex items-center justify-between px-6 py-2.5 bg-slate-50/50 border-t border-slate-200 shrink-0 h-10">
+                <div className="flex items-center gap-6">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">
+                        Viewing records {page * pageSize + 1}-{Math.min((page + 1) * pageSize, totalCount)} of {totalCount} total
                     </span>
                 </div>
                 
