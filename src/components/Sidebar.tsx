@@ -74,7 +74,7 @@ export function Sidebar() {
     return (
         <>
             {/* --- MOBILE BOTTOM NAV BAR --- */}
-            <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl border-t border-primary/5 z-[60] flex items-center justify-around px-2 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-safe">
+            <nav className="lg:hidden rounded-t-[var(--ui-radius-lg)] fixed bottom-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl border-t border-primary/5 z-[60] flex items-center justify-around px-2 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-safe">
                 <Link href="/pos" className="flex flex-col items-center gap-1 p-2 w-16 group">
                     <div className={cn(
                         "p-2 rounded-xl transition-all",

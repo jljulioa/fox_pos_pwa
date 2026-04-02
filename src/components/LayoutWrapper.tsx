@@ -43,7 +43,7 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
                         {children}
                     </div>
                 ) : (
-                    <div className="pt-6 px-3 lg:pt-3 h-screen pb-28 lg:pb-3">
+                    <div className="pt-6 px-3 lg:pt-3 h-screen pb-20 lg:pb-3">
                         {children}
                     </div>
                 )}

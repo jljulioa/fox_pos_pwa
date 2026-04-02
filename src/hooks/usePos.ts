@@ -275,9 +275,26 @@ export function usePos() {
         }
     }, [cart, currentSale, paymentMethod, fetchInitialData]);
 
-    const updateItemPrice = useCallback(async (productId: string, newPrice: number) => {
+    const updateItemPrice = useCallback(async (productId: string, newPrice: number): Promise<{ error: string | null }> => {
         const item = cart.find(i => i.id === productId);
-        if (!item || !currentSale) return;
+        if (!item || !currentSale) return { error: "Item or sale not found" };
+
+        // ── Price boundary guards ────────────────────────────────────────
+        const costFloor   = Number(item.cost ?? 0);
+        const priceCeiling = Number(item.original_price ?? item.price);
+
+        if (newPrice < costFloor) {
+            const msg = `Price $${newPrice.toFixed(2)} is below cost ($${costFloor.toFixed(2)}). Minimum allowed: $${costFloor.toFixed(2)}.`;
+            setError(msg);
+            return { error: msg };
+        }
+        if (newPrice > priceCeiling) {
+            const msg = `Price $${newPrice.toFixed(2)} exceeds the catalogue price ($${priceCeiling.toFixed(2)}). Maximum allowed: $${priceCeiling.toFixed(2)}.`;
+            setError(msg);
+            return { error: msg };
+        }
+        // ────────────────────────────────────────────────────────────────
+
         try {
             const taxRate = item.tax_rate || 0;
             const totalPrice = newPrice * item.quantity;
@@ -290,12 +307,16 @@ export function usePos() {
                 tax_amount: taxAmount
             });
             if (updateError) throw updateError;
+
             const newCart = cart.map(i => i.id === productId ? { ...i, price: newPrice } : i);
             setCart(newCart);
             syncCartWithDB(newCart, currentSale.id);
+            setError(null);
+            return { error: null };
         } catch (err: any) {
             console.error("Update price error:", err);
             setError("Failed to update item price");
+            return { error: err.message };
         }
     }, [cart, currentSale, syncCartWithDB]);
 
