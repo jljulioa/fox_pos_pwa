@@ -1,7 +1,7 @@
 {
-    "name": "Fox Moto POS",
-    "short_name": "MotoPOS",
-    "description": "Motorcycle Parts POS and Inventory Management",
+    "name": "VENDA",
+    "short_name": "VENDA",
+    "description": "POS and Inventory Management",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
