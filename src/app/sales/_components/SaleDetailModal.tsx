@@ -28,7 +28,7 @@ export function SaleDetailModal({
 
     return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-3xl rounded-[var(--ui-radius-lg)] shadow-2xl border border-slate-200 overflow-hidden relative flex flex-col h-[90vh] animate-in zoom-in-95 duration-300">
+            <div className="bg-white w-full max-w-3xl rounded-[var(--ui-radius-lg)] shadow-2xl border border-slate-200 overflow-hidden relative flex flex-col h-[80vh] animate-in zoom-in-95 duration-300">
                 
                 {/* Modal Header */}
                 <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -123,7 +123,7 @@ export function SaleDetailModal({
                                                 size="icon"
                                                 disabled={processReturn}
                                                 onClick={() => handleReturn(item)}
-                                                className="h-8 w-8 rounded-[var(--ui-radius-sm)] border-red-50 text-red-400 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all opacity-0 group-hover:opacity-100"
+                                                className="h-8 w-8 rounded-[var(--ui-radius-sm)] border-red-50 text-red-400 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all md:opacity-0 group-hover:opacity-100"
                                                 title="Process Return"
                                             >
                                                 <Undo size={14} strokeWidth={2.5} />

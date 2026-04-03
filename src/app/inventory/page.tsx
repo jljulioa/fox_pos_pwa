@@ -135,19 +135,28 @@ export default function InventoryPage() {
                 if (rpcErr) throw rpcErr;
                 finalSku = generated;
             }
-            const payload = {
-                ...formData,
+
+            // Build a clean payload — coerce empty strings on UUID/nullable columns
+            const basePayload = {
+                name: formData.name,
                 sku: finalSku,
+                reference: formData.reference || null,
+                brand: formData.brand || null,
+                category_id: formData.category_id || null,
                 cost: parseFloat(formData.cost),
                 price: parseFloat(formData.price),
                 stock: parseInt(formData.stock),
                 min_stock: parseInt(formData.min_stock),
-                max_stock: parseInt(formData.max_stock)
+                max_stock: parseInt(formData.max_stock),
+                taxable: formData.taxable,
             };
+
             if (isEditing) {
-                await inventoryService.updateProduct(formData.id, payload);
+                // id is already the .eq() param in updateProduct — never send it in the body
+                await inventoryService.updateProduct(formData.id, basePayload);
             } else {
-                await inventoryService.createProduct(payload);
+                // Omit id entirely → Postgres uses gen_random_uuid() default
+                await inventoryService.createProduct(basePayload);
             }
             setShowModal(false);
             fetchProducts();

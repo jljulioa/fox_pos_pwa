@@ -125,13 +125,6 @@ export function InventoryDesktopView({ products, loading, onEdit, onDelete }: In
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center justify-center gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 rounded-[var(--ui-radius-sm)] text-slate-400 hover:text-primary hover:bg-white border border-transparent hover:border-slate-100"
-                                                >
-                                                    <Eye size={14} strokeWidth={2.5} />
-                                                </Button>
                                                 <Button 
                                                     variant="ghost"
                                                     size="icon"

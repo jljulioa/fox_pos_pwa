@@ -468,18 +468,18 @@ export default function PurchasesPage() {
 
             {/* Add Payment */}
             {Number(selectedPurchase.balance_due) > 0 && (
-              <div className="bg-slate-900 border border-slate-800 rounded-[var(--ui-radius-xl)] p-6 space-y-4">
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Add Payment</h3>
+              <div className="bg-primary border border-primary/20 rounded-[var(--ui-radius-xl)] p-6 space-y-4">
+                <h3 className="text-[10px] text-white font-bold uppercase tracking-widest text-slate-400">Add Payment</h3>
                 <input
                   type="number" step="0.01" value={newPaymentAmount}
                   onChange={e => setNewPaymentAmount(e.target.value)}
                   placeholder="Amount..."
-                  className="w-full h-9 px-3 bg-slate-800 border border-slate-700 text-white rounded-[var(--ui-radius-md)] text-[12px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-slate-600"
+                  className="w-full h-9 px-3 bg-white border border-slate-200 text-slate-800 rounded-[var(--ui-radius-md)] text-[12px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-slate-600"
                 />
                 <select
                   value={newPaymentMethod}
                   onChange={e => setNewPaymentMethod(e.target.value)}
-                  className="w-full h-9 px-3 bg-slate-800 border border-slate-700 text-white rounded-[var(--ui-radius-md)] text-[12px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none"
+                  className="w-full h-9 px-3 bg-white border border-slate-200 text-slate-800 rounded-[var(--ui-radius-md)] text-[12px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none"
                 >
                   <option value="cash">Cash</option>
                   <option value="transfer">Bank Transfer</option>
@@ -488,7 +488,7 @@ export default function PurchasesPage() {
                 <button
                   disabled={submitting}
                   onClick={handleAddPayment}
-                  className="w-full h-10 text-white bg-primary rounded-[var(--ui-radius-md)] text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 hover:opacity-95 active:scale-[0.98] disabled:opacity-50"
+                  className="w-full h-10 text-white font-bold bg-slate-700 hover:bg-slate-800 rounded-[var(--ui-radius-md)] text-[11px] uppercase tracking-widest shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 hover:opacity-95 active:scale-[0.98] disabled:opacity-50"
                 >
                   {submitting ? <Loader2 size={15} className="animate-spin" /> : <DollarSign size={15} />}
                   Record Payment
@@ -553,7 +553,7 @@ export default function PurchasesPage() {
               placeholder="Filter by invoice or supplier..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full h-8 pl-9 pr-8 bg-slate-50 border border-slate-200 rounded-[var(--ui-radius-md)] text-[11px] font-bold uppercase italic tracking-widest text-slate-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              className="w-full h-8 pl-9 pr-8 bg-slate-50 border border-slate-200 rounded-[var(--ui-radius-md)] text-[11px] font-bold italic tracking-widest text-slate-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             />
             {searchTerm && (
               <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500">
@@ -563,10 +563,10 @@ export default function PurchasesPage() {
           </div>
           <button
             onClick={openNewPurchase}
-            className="h-10 px-6 bg-primary text-white rounded-[var(--ui-radius-md)] font-black flex items-center gap-2.5 shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-[0.98] transition-all text-[11px] uppercase tracking-widest italic shrink-0"
+            className="h-8 px-3 bg-primary text-white rounded-[var(--ui-radius-md)] font-black flex items-center gap-2.5 shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-[0.98] transition-all text-[11px] uppercase tracking-widest shrink-0"
           >
-            <Plus size={16} strokeWidth={2.5} />
-            New Order
+            <Plus size={12} strokeWidth={2.5} />
+            New
           </button>
         </div>
       </header>
